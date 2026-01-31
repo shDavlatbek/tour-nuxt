@@ -46,6 +46,7 @@ export function useMap(): UseMapReturn {
   const isZoomAnimating = ref(false)
   const zoomBlend = ref(0)
   const zoomedCamPos = ref({ x: 0, y: 0, z: 1200 })
+  const isEntranceAnimating = ref(false)
 
   // Three.js objects (not reactive for performance to avoid Proxy overhead)
   let scene: THREE.Scene | null = null
@@ -219,6 +220,27 @@ export function useMap(): UseMapReturn {
     return sprite
   }
 
+  function updateMarkerScales(): void {
+    if (!camera || interactablePoints.length === 0) return
+
+    const cameraZ = camera.position.z
+    // Base scale at initial camera position (z=1200)
+    const baseZ = INITIAL_CAM_POS.z
+    // Calculate scale factor - markers should be smaller when zoomed in
+    const scaleFactor = Math.max(0.3, Math.min(1.0, cameraZ / baseZ))
+
+    interactablePoints.forEach((marker) => {
+      if (marker.userData.isMarker) {
+        // Store original scale if not set
+        if (!marker.userData.originalScale) {
+          marker.userData.originalScale = 1.0
+        }
+        
+        marker.scale.setScalar(scaleFactor)
+      }
+    })
+  }
+
   function zoomIn(targetPoint: THREE.Group): void {
     state.value.isZoomed = true
     isZoomAnimating.value = true
@@ -355,6 +377,9 @@ export function useMap(): UseMapReturn {
         point.position.z = point.userData.baseZ + bob
       })
     }
+
+    // Update marker scales based on camera Z position
+    updateMarkerScales()
 
     // Drifting fog
     if (!state.value.isZoomed) {
@@ -560,9 +585,45 @@ export function useMap(): UseMapReturn {
       child.position.y -= offsetY
     })
 
-    combinedMapGroup?.scale.set(MAP_SCALE, -MAP_SCALE, MAP_SCALE)
-
+    // Set initial state for entrance animation
+    combinedMapGroup!.scale.set(0.01, -0.01, 0.01)
+    combinedMapGroup!.position.z = 500
+    
+    // Start entrance animation
+    isEntranceAnimating.value = true
     state.value.isLoading = false
+    
+    // Animate scale
+    const scaleObj = { value: 0.01 }
+    new Tween(scaleObj, tweenGroup)
+      .to({ value: MAP_SCALE }, 2000)
+      .easing(Easing.Cubic.Out)
+      .onUpdate(() => {
+        if (combinedMapGroup) {
+          combinedMapGroup.scale.set(scaleObj.value, -scaleObj.value, scaleObj.value)
+        }
+      })
+      .start()
+    
+    // Animate position from far to normal
+    new Tween(combinedMapGroup!.position, tweenGroup)
+      .to({ z: 0 }, 2000)
+      .easing(Easing.Cubic.Out)
+      .onComplete(() => {
+        isEntranceAnimating.value = false
+      })
+      .start()
+    
+    // Also animate fog particles from invisible to visible
+    fogParticles.forEach((sprite, index) => {
+      sprite.material.opacity = 0
+      new Tween(sprite.material, tweenGroup)
+        .to({ opacity: 0.4 }, 1200)
+        .delay(800 + index * 30)
+        .easing(Easing.Cubic.Out)
+        .start()
+    })
+    
   } catch (error) {
     console.error('[useMap] Failed to load map:', error)
     state.value.isLoading = false
