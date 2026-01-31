@@ -1,0 +1,84 @@
+import * as THREE from 'three'
+
+/**
+ * Creates a cloud/fog texture using canvas
+ */
+export function createFogTexture(): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas')
+  canvas.width = 256
+  canvas.height = 256
+  const ctx = canvas.getContext('2d')!
+
+  const blobs = [
+    { x: 128, y: 128, r: 90 },
+    { x: 80 + Math.random() * 30, y: 100 + Math.random() * 30, r: 50 + Math.random() * 30 },
+    { x: 160 + Math.random() * 30, y: 90 + Math.random() * 30, r: 45 + Math.random() * 25 },
+    { x: 100 + Math.random() * 20, y: 160 + Math.random() * 30, r: 55 + Math.random() * 25 },
+    { x: 170 + Math.random() * 20, y: 150 + Math.random() * 30, r: 40 + Math.random() * 30 },
+    { x: 60 + Math.random() * 20, y: 140 + Math.random() * 20, r: 35 + Math.random() * 20 },
+    { x: 140 + Math.random() * 20, y: 70 + Math.random() * 20, r: 30 + Math.random() * 20 },
+  ]
+
+  blobs.forEach((blob) => {
+    const gradient = ctx.createRadialGradient(blob.x, blob.y, 0, blob.x, blob.y, blob.r)
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.25)')
+    gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.15)')
+    gradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.08)')
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)')
+
+    ctx.fillStyle = gradient
+    ctx.beginPath()
+    ctx.arc(blob.x, blob.y, blob.r, 0, Math.PI * 2)
+    ctx.fill()
+  })
+
+  return new THREE.CanvasTexture(canvas)
+}
+
+/**
+ * Creates a text sprite for country labels
+ */
+export function createTextSprite(
+  text: string,
+  fontSize = 40,
+  color = '#555555'
+): THREE.Sprite {
+  const canvas = document.createElement('canvas')
+  const ctx = canvas.getContext('2d')!
+
+  const scale = 2
+  const scaledFontSize = fontSize * scale
+  const fontString = 'bold ' + scaledFontSize + 'px Arial'
+
+  ctx.font = fontString
+  const metrics = ctx.measureText(text)
+  const textWidth = metrics.width
+
+  canvas.width = Math.ceil(textWidth + 40 * scale)
+  canvas.height = Math.ceil(scaledFontSize + 20 * scale)
+
+  ctx.font = fontString
+  ctx.fillStyle = color
+  ctx.textAlign = 'center'
+  ctx.textBaseline = 'middle'
+  ctx.imageSmoothingEnabled = true
+  ctx.imageSmoothingQuality = 'high'
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2)
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.needsUpdate = true
+  texture.minFilter = THREE.LinearFilter
+  texture.magFilter = THREE.LinearFilter
+
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthTest: false,
+  })
+  const sprite = new THREE.Sprite(material)
+
+  const spriteScale = canvas.width / (4 * scale)
+  sprite.scale.set(spriteScale, spriteScale * (canvas.height / canvas.width), 1)
+
+  return sprite
+}
