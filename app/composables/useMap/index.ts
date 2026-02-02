@@ -6,7 +6,7 @@ import { ref } from 'vue'
 import type { MapState, UseMapReturn, CameraPosition } from './types'
 
 // Config
-import { INITIAL_CAM_POS, LABEL_CONFIG } from './config'
+import { INITIAL_CAM_POS, LABEL_CONFIG, COLORS } from './config'
 
 // Utilities
 import { createFogTexture } from './textures'
@@ -239,10 +239,12 @@ export function useMap(): UseMapReturn {
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
 
       raycaster.setFromCamera(mouse, camera!)
-      const intersects = raycaster.intersectObjects(interactablePoints, true)
-
-      if (intersects.length > 0) {
-        const firstIntersect = intersects[0]
+      
+      // Check markers first
+      const markerIntersects = raycaster.intersectObjects(interactablePoints, true)
+      
+      if (markerIntersects.length > 0) {
+        const firstIntersect = markerIntersects[0]
         if (!firstIntersect) return
 
         let target: THREE.Object3D | null = firstIntersect.object
@@ -250,24 +252,72 @@ export function useMap(): UseMapReturn {
           target = target.parent
         }
         if (target && target.userData.isMarker) {
-          // Track selected region for label handling
-          selectedRegionId = target.userData.regionId || null
-          
-          // Update labels: show only selected, hide others, scale up
-          updateLabelsForZoom(cityLabels, selectedRegionId, true, tweenGroup, 1.8)
-          
-          zoomIn(
-            camera!,
-            target as THREE.Group,
-            tweenGroup,
-            state,
-            isZoomAnimating,
-            zoomedCamPos,
-            fogParticles,
-            interactablePoints
-          )
+          triggerZoomToRegion(target.userData.regionId, target as THREE.Group)
+          return
         }
       }
+      
+      // Check labels (sprites and lines)
+      if (labelsGroup) {
+        const labelObjects: THREE.Object3D[] = []
+        labelsGroup.traverse((child) => {
+          if (child instanceof THREE.Sprite || child instanceof THREE.Line) {
+            labelObjects.push(child)
+          }
+        })
+        
+        const labelIntersects = raycaster.intersectObjects(labelObjects, false)
+        if (labelIntersects.length > 0 && labelIntersects[0]) {
+          // Find which label was clicked
+          let labelGroup: THREE.Object3D | null = labelIntersects[0].object.parent
+          while (labelGroup && !labelGroup.name.startsWith('label-')) {
+            labelGroup = labelGroup.parent
+          }
+          
+          if (labelGroup && labelGroup.name.startsWith('label-')) {
+            const regionId = labelGroup.name.replace('label-', '')
+            // Find corresponding marker
+            const marker = interactablePoints.find(m => m.userData.regionId === regionId)
+            if (marker) {
+              triggerZoomToRegion(regionId, marker)
+            }
+          }
+        }
+      }
+    }
+    
+    // Helper function to trigger zoom to a region
+    function triggerZoomToRegion(regionId: string, marker: THREE.Group) {
+      selectedRegionId = regionId
+      updateLabelsForZoom(cityLabels, selectedRegionId, true, tweenGroup, 1.8)
+      
+      // Highlight selected region meshes
+      highlightRegionMeshes(marker, true)
+      
+      zoomIn(
+        camera!,
+        marker,
+        tweenGroup,
+        state,
+        isZoomAnimating,
+        zoomedCamPos,
+        fogParticles,
+        interactablePoints
+      )
+    }
+    
+    // Highlight or reset region mesh colors
+    function highlightRegionMeshes(marker: THREE.Group, highlight: boolean) {
+      const meshes = marker.userData.regionMeshes as THREE.Mesh[] | undefined
+      if (!meshes) return
+      
+      meshes.forEach((mesh) => {
+        if (mesh.material instanceof THREE.MeshStandardMaterial) {
+          mesh.material.color.setHex(highlight ? COLORS.uzbekistanHighlight : COLORS.uzbekistan)
+          mesh.material.emissive.setHex(highlight ? 0x332200 : 0x000000)
+          mesh.material.emissiveIntensity = highlight ? 0.3 : 0
+        }
+      })
     }
 
     handleResize = () => {
@@ -340,6 +390,20 @@ export function useMap(): UseMapReturn {
   }
 
   function zoomOut(): void {
+    // Reset all region mesh colors
+    interactablePoints.forEach((marker) => {
+      const meshes = marker.userData.regionMeshes as THREE.Mesh[] | undefined
+      if (meshes) {
+        meshes.forEach((mesh) => {
+          if (mesh.material instanceof THREE.MeshStandardMaterial) {
+            mesh.material.color.setHex(COLORS.uzbekistan)
+            mesh.material.emissive.setHex(0x000000)
+            mesh.material.emissiveIntensity = 0
+          }
+        })
+      }
+    })
+    
     // Reset labels when zooming out
     selectedRegionId = null
     updateLabelsForZoom(cityLabels, null, false, tweenGroup)

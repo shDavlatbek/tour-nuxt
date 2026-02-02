@@ -136,6 +136,10 @@ export async function loadMap(
           const regionIndex = interactablePoints.length
           const regionId = pathId || `region-${regionIndex}`
           const marker = createMarker(pathCenter, maxDimension, regionIndex, regionId)
+          
+          // Store mesh references for region highlighting
+          marker.userData.regionMeshes = pathMeshes
+          
           countryGroup.add(marker)
           interactablePoints.push(marker)
         }
