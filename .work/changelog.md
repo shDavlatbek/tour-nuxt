@@ -1,5 +1,26 @@
 # Map Changelog
 
+## 2026-02-03
+
+### Added
+
+- **Grid overlay shader** for region highlighting:
+  - Smooth fade-in/out using `onBeforeCompile` shader modification (like CodePen texture mixing)
+  - Grid texture generated via canvas (`createGridTexture` in `textures.ts`)
+  - 45-degree rotation for diagonal grid pattern
+  - Uses world-space coordinates (fixed to mesh, not affected by camera/parallax)
+  - Animated via TWEEN (`gridMix` uniform 0→1)
+  - Emissive glow synced with grid visibility
+
+### Changed
+
+- `loader.ts`: Materials now have `onBeforeCompile` for grid blending
+- `textures.ts`: Added `createGridTexture()` function
+- `config.ts`: Highlight color tuned to `0xffd24d`
+- Mouse hint styling: Added background, border-radius, padding
+
+---
+
 ## 2026-02-02
 
 ### Refactored

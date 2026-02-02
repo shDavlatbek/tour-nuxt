@@ -7,6 +7,7 @@ const { state, init, dispose, zoomOut } = useMap()
 const mapContainer = ref<HTMLElement | null>(null)
 const showZoomVignette = ref(false)
 const hasInteracted = ref(false)
+const showClickHint = ref(false)
 
 // Initialize map on mount - use nextTick to ensure ClientOnly has rendered
 onMounted(async () => {
@@ -27,23 +28,29 @@ onUnmounted(() => {
     window.removeEventListener('touchstart', handleFirstInteraction)
 })
 
-// Hide hint after first interaction
+// Hide mouse hint after first interaction, then show click hint
 function handleFirstInteraction() {
     if (!hasInteracted.value && !state.value.isLoading) {
-        // Delay hiding by 3 seconds to let user see effect
+        // Delay hiding mouse hint by 1.5 seconds
         setTimeout(() => {
             hasInteracted.value = true
-        }, 3000)
+            // Show click hint after mouse hint fades out
+            setTimeout(() => {
+                showClickHint.value = true
+            }, 400) // Wait for mouse hint fade out
+        }, 1500)
         window.removeEventListener('mousemove', handleFirstInteraction)
         window.removeEventListener('touchstart', handleFirstInteraction)
     }
 }
 
-// Watch zoom state for vignette
+// Watch zoom state for vignette and click hint
 watch(
     () => state.value.isZoomed,
     (isZoomed) => {
         if (isZoomed) {
+            // Hide click hint when user zooms in (they clicked a city)
+            showClickHint.value = false
             setTimeout(() => {
                 showZoomVignette.value = true
             }, 600)
@@ -94,6 +101,23 @@ function handleBackClick() {
             </div>
             <span class="hero__mouse-hint-text">Move mouse to explore</span>
         </div>
+
+        <!-- Click City Hint -->
+        <ClientOnly>
+            <div class="hero__click-hint" :class="{ 'hero__click-hint--visible': showClickHint && !state.isZoomed }">
+                <div class="hero__click-hint-icon">
+                    <svg class="hero__click-hint-marker" width="32" height="32" viewBox="0 0 48 48" fill="none">
+                        <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="2" opacity="0.5" />
+                        <circle cx="24" cy="24" r="8" fill="currentColor" />
+                    </svg>
+                    <svg class="hero__click-hint-cursor" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path d="M4 2L4 18L8 14L12 22L16 20L12 12L18 12L4 2Z" fill="currentColor"
+                            stroke="rgba(0,0,0,0.3)" stroke-width="1" stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <span class="hero__click-hint-text">Click a city to explore</span>
+            </div>
+        </ClientOnly>
 
         <!-- UI Layer -->
         <div class="hero__ui-layer">

@@ -306,3 +306,103 @@ body {
     letter-spacing: 2px;
   }
 }
+
+/* Click City Hint */
+.hero__click-hint {
+  position: fixed;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  color: rgba(255, 255, 255, 0.95);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+  z-index: 100;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 24px;
+}
+
+.hero__click-hint--visible {
+  opacity: 1;
+}
+
+.hero__click-hint-icon {
+  position: relative;
+  width: 32px;
+  height: 32px;
+}
+
+.hero__click-hint-marker {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.hero__click-hint-cursor {
+  position: absolute;
+  top: 6px;
+  left: 12px;
+  animation: cursor-click 1.5s ease-in-out infinite;
+}
+
+.hero__click-hint-text {
+  font-family: "Outfit", sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.95);
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes cursor-click {
+  0% {
+    transform: translateX(20px) scale(1);
+    /* opacity: 0; */
+  }
+
+  20% {
+    transform: translateX(0) scale(1);
+    /* opacity: 1; */
+  }
+
+  40% {
+    transform: translateX(0) scale(1);
+  }
+
+  /* click */
+  50% {
+    transform: translateX(0) translateY(3px) scale(0.9);
+  }
+
+  60% {
+    transform: translateX(0) translateY(0) scale(1);
+  }
+
+  80% {
+    transform: translateX(20px) scale(1);
+    /* opacity: 0; */
+  }
+
+  100% {
+    transform: translateX(20px) scale(1);
+    /* opacity: 0; */
+  }
+}
+
+@media (max-width: 768px) {
+  .hero__click-hint {
+    bottom: 35px;
+    padding: 16px;
+  }
+
+  .hero__click-hint-text {
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+}

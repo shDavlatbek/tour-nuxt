@@ -7,10 +7,51 @@
 - `app/composables/useMap/labels.ts` - city name labels with leader lines
 - `app/composables/useMap/markers.ts` - region markers (circles)
 - `app/composables/useMap/camera.ts` - zoom in/out, parallax
-- `app/composables/useMap/loader.ts` - SVG loading
+- `app/composables/useMap/loader.ts` - SVG loading, grid shader setup
 - `app/composables/useMap/grid.ts` - background grid
-- `app/composables/useMap/textures.ts` - fog texture
+- `app/composables/useMap/textures.ts` - fog texture, grid texture
 - `public/map.svg` - combined SVG with region IDs
+
+## Grid Overlay Shader
+
+Region meshes have a custom shader for smooth grid highlight effect:
+
+```ts
+// loader.ts - material setup
+material.userData = {
+  gridMap: { value: gridTexture },      // Canvas grid texture
+  gridMix: { value: 0.0 },              // 0 = no grid, 1 = full grid
+  highlightColor: { value: new THREE.Color(...) },
+}
+
+material.onBeforeCompile = (shader) => {
+  // Injects uniforms and modifies fragment shader
+  // Uses world-space UV (fixed to mesh, not camera)
+  // 45° rotation for diagonal grid
+}
+```
+
+### Animating Grid
+
+```ts
+// index.ts - highlightRegionMeshes()
+new Tween({ mix: currentMix }, tweenGroup)
+  .to({ mix: targetMix }, 500)
+  .onUpdate(({ mix }) => {
+    mat.userData.gridMix.value = mix;
+    mat.emissive.setHex(mix > 0 ? 0x332200 : 0x000000);
+    mat.emissiveIntensity = mix * 0.3;
+  })
+  .start();
+```
+
+### Grid Texture
+
+```ts
+// textures.ts
+createGridTexture(size, spacing, lineWidth, color, alpha);
+// Example: createGridTexture(256, 32, 2, '#ff5e00ff', 1)
+```
 
 ## Region Labels Config
 
@@ -76,3 +117,4 @@ NEVER use `import TWEEN from` or `import * as TWEEN`.
 - Don't wrap Three.js objects in `ref()`
 - Don't forget `tweenGroup` param in `new Tween()`
 - Don't call `init()` before container exists
+- Don't use `vViewPosition` for grid UV (moves with camera)
