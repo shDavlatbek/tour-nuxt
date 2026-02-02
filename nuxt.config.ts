@@ -16,4 +16,14 @@ export default defineNuxtConfig({
       viewport: 'width=device-width, initial-scale=1',
     },
   },
+  vite: {
+    server: {
+      allowedHosts: [
+        'ed388f380723.ngrok-free.app',
+        '695cdf8f685e.ngrok-free.app',
+        'https://ed388f380723.ngrok-free.app',
+        'https://695cdf8f685e.ngrok-free.app'
+      ]
+    }
+  }
 })

@@ -1,12 +1,14 @@
 import * as THREE from 'three'
-import { COLORS, INITIAL_CAM_POS } from './config'
+import { COLORS, INITIAL_CAM_POS, REGION_NAMES } from './config'
 
 /**
  * Creates an interactive marker for a region
  */
 export function createMarker(
   center: THREE.Vector3,
-  maxDimension: number
+  maxDimension: number,
+  regionIndex: number = 0,
+  regionId: string = ''
 ): THREE.Group {
   const markerGroup = new THREE.Group()
   markerGroup.position.set(center.x, center.y, 10)
@@ -35,6 +37,9 @@ export function createMarker(
   markerGroup.userData.zoomDistance = maxDimension * 4 + 100
   markerGroup.userData.baseZ = 10
   markerGroup.userData.isMarker = true
+  markerGroup.userData.regionIndex = regionIndex
+  markerGroup.userData.regionId = regionId || `region-${regionIndex}`
+  markerGroup.userData.regionName = REGION_NAMES[regionIndex] || `REGION ${regionIndex + 1}`
 
   return markerGroup
 }

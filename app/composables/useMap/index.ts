@@ -6,7 +6,7 @@ import { ref } from 'vue'
 import type { MapState, UseMapReturn, CameraPosition } from './types'
 
 // Config
-import { INITIAL_CAM_POS } from './config'
+import { INITIAL_CAM_POS, LABEL_CONFIG } from './config'
 
 // Utilities
 import { createFogTexture } from './textures'
@@ -14,6 +14,7 @@ import { createGrid, animateGrid } from './grid'
 import { updateMarkerScales, animateMarkers } from './markers'
 import { zoomIn, zoomOutCamera, updateParallax } from './camera'
 import { loadMap } from './loader'
+import { createCityLabel, updateLabelsProximity, updateLabelPositions, disposeLabels, updateLabelsForZoom, hideAllLabels, type CityLabel } from './labels'
 
 // Create a dedicated tween group for this composable
 const tweenGroup = new Group()
@@ -40,15 +41,21 @@ export function useMap(): UseMapReturn {
   let combinedMapGroup: THREE.Group | null = null
   let fogGroup: THREE.Group | null = null
   let gridGroup: THREE.Group | null = null
+  let labelsGroup: THREE.Group | null = null
 
   // Arrays
   const interactablePoints: THREE.Group[] = []
   const fogParticles: THREE.Sprite[] = []
   const gridLines: THREE.Line[] = []
+  const cityLabels: CityLabel[] = []
+
+  // Selection tracking
+  let selectedRegionId: string | null = null
 
   // Mouse tracking
   const mouseTarget = { x: 0, y: 0 }
   const mouseCurrent = { x: 0, y: 0 }
+  const mouseScreenPos = { x: 0, y: 0 }
 
   // Utils
   const clock = new THREE.Clock()
@@ -83,6 +90,25 @@ export function useMap(): UseMapReturn {
     fogParticles.push(sprite)
   }
 
+  /**
+   * Creates city labels for all markers after map loads
+   */
+  function createLabelsForMarkers(): void {
+    if (!labelsGroup) return
+
+    interactablePoints.forEach((marker) => {
+      if (marker.userData.isMarker) {
+        const label = createCityLabel(
+          marker.userData.regionId,
+          marker,
+          marker.userData.regionIndex
+        )
+        labelsGroup!.add(label.group)
+        cityLabels.push(label)
+      }
+    })
+  }
+
   function animate(): void {
     animationFrameId = requestAnimationFrame(animate)
 
@@ -113,6 +139,15 @@ export function useMap(): UseMapReturn {
 
     // Update marker scales
     updateMarkerScales(camera!, interactablePoints)
+
+    // Update label positions and proximity
+    if (cityLabels.length > 0) {
+      updateLabelPositions(cityLabels, combinedMapGroup!)
+      // Only check proximity when not zoomed (zoomed labels are handled separately)
+      if (!state.value.isZoomed) {
+        updateLabelsProximity(cityLabels, camera!, mouseScreenPos, LABEL_CONFIG.revealRadius, tweenGroup)
+      }
+    }
 
     // Drifting fog
     if (!state.value.isZoomed) {
@@ -185,10 +220,16 @@ export function useMap(): UseMapReturn {
     combinedMapGroup = new THREE.Group()
     scene.add(combinedMapGroup)
 
+    // Labels group
+    labelsGroup = new THREE.Group()
+    scene.add(labelsGroup)
+
     // Event handlers
     handleMouseMove = (e: MouseEvent) => {
       mouseTarget.x = (e.clientX / window.innerWidth - 0.5) * 2
       mouseTarget.y = (e.clientY / window.innerHeight - 0.5) * 2
+      mouseScreenPos.x = e.clientX
+      mouseScreenPos.y = e.clientY
     }
 
     handleClick = (e: MouseEvent) => {
@@ -209,6 +250,12 @@ export function useMap(): UseMapReturn {
           target = target.parent
         }
         if (target && target.userData.isMarker) {
+          // Track selected region for label handling
+          selectedRegionId = target.userData.regionId || null
+          
+          // Update labels: show only selected, hide others, scale up
+          updateLabelsForZoom(cityLabels, selectedRegionId, true, tweenGroup, 1.8)
+          
           zoomIn(
             camera!,
             target as THREE.Group,
@@ -235,6 +282,10 @@ export function useMap(): UseMapReturn {
 
     // Load map and start animation
     loadMap(combinedMapGroup, interactablePoints, state, fogParticles, tweenGroup, isEntranceAnimating)
+      .then(() => {
+        createLabelsForMarkers()
+      })
+    
     animate()
   }
 
@@ -246,6 +297,9 @@ export function useMap(): UseMapReturn {
     if (handleMouseMove) window.removeEventListener('mousemove', handleMouseMove)
     if (handleClick) window.removeEventListener('click', handleClick)
     if (handleResize) window.removeEventListener('resize', handleResize)
+
+    // Dispose labels
+    disposeLabels(cityLabels)
 
     scene?.traverse((object: THREE.Object3D) => {
       if (object instanceof THREE.Mesh) {
@@ -281,10 +335,15 @@ export function useMap(): UseMapReturn {
     combinedMapGroup = null
     fogGroup = null
     gridGroup = null
+    labelsGroup = null
     containerEl = null
   }
 
   function zoomOut(): void {
+    // Reset labels when zooming out
+    selectedRegionId = null
+    updateLabelsForZoom(cityLabels, null, false, tweenGroup)
+    
     zoomOutCamera(
       camera!,
       tweenGroup,

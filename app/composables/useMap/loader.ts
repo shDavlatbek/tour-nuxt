@@ -52,9 +52,12 @@ export async function loadMap(
       const countryGroup = new THREE.Group()
       countryGroup.name = countryId
 
-      paths.forEach((path: any) => {
+      paths.forEach((path: any, pathIndex: number) => {
         const shapes = SVGLoader.createShapes(path)
         const pathMeshes: THREE.Mesh[] = []
+        
+        // Get region ID from path userData (set by SVGLoader from id attribute)
+        const pathId = path.userData?.node?.id || ''
 
         shapes.forEach((shape: THREE.Shape) => {
           if (isUzbekistan) {
@@ -84,12 +87,12 @@ export async function loadMap(
               depth: EXTRUDE_DEPTHS.sea,
               bevelEnabled: false,
             })
-            const material = new THREE.MeshStandardMaterial({
+            const material = new THREE.MeshBasicMaterial({
               color: COLORS.sea,
-              roughness: 0.6,
-              metalness: 0.1,
+              // roughness: 0.6,
+              // metalness: 0.1,
               transparent: true,
-              opacity: 0.8,
+              opacity: 0.5,
             })
 
             const mesh = new THREE.Mesh(geometry, material)
@@ -130,7 +133,9 @@ export async function loadMap(
           pathBox.getSize(pathSize)
 
           const maxDimension = Math.max(pathSize.x, pathSize.y)
-          const marker = createMarker(pathCenter, maxDimension)
+          const regionIndex = interactablePoints.length
+          const regionId = pathId || `region-${regionIndex}`
+          const marker = createMarker(pathCenter, maxDimension, regionIndex, regionId)
           countryGroup.add(marker)
           interactablePoints.push(marker)
         }
