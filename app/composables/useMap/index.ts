@@ -9,7 +9,7 @@ import type { MapState, UseMapReturn, CameraPosition } from './types'
 import { INITIAL_CAM_POS, LABEL_CONFIG, COLORS } from './config'
 
 // Utilities
-import { createFogTexture } from './textures'
+import { createFogTexture, createGridTexture } from './textures'
 import { createGrid, animateGrid } from './grid'
 import { updateMarkerScales, animateMarkers } from './markers'
 import { zoomIn, zoomOutCamera, updateParallax } from './camera'
@@ -313,9 +313,26 @@ export function useMap(): UseMapReturn {
       
       meshes.forEach((mesh) => {
         if (mesh.material instanceof THREE.MeshStandardMaterial) {
-          mesh.material.color.setHex(highlight ? COLORS.uzbekistanHighlight : COLORS.uzbekistan)
-          mesh.material.emissive.setHex(highlight ? 0x332200 : 0x000000)
-          mesh.material.emissiveIntensity = highlight ? 0.3 : 0
+          if (highlight) {
+            // Store original color if not already stored
+            if (mesh.userData.originalColor === undefined) {
+              mesh.userData.originalColor = mesh.material.color.getHex()
+            }
+            
+            // Apply bright highlight color with glow
+            mesh.material.color.setHex(COLORS.uzbekistanHighlight)
+            mesh.material.emissive.setHex(0x664400)
+            mesh.material.emissiveIntensity = 0.4
+            mesh.material.roughness = 0.3
+          } else {
+            // Restore original color
+            const originalColor = mesh.userData.originalColor ?? COLORS.uzbekistan
+            mesh.material.color.setHex(originalColor)
+            mesh.material.emissive.setHex(0x000000)
+            mesh.material.emissiveIntensity = 0
+            mesh.material.roughness = 0.5
+          }
+          mesh.material.needsUpdate = true
         }
       })
     }
@@ -396,9 +413,12 @@ export function useMap(): UseMapReturn {
       if (meshes) {
         meshes.forEach((mesh) => {
           if (mesh.material instanceof THREE.MeshStandardMaterial) {
-            mesh.material.color.setHex(COLORS.uzbekistan)
+            const originalColor = mesh.userData.originalColor ?? COLORS.uzbekistan
+            mesh.material.color.setHex(originalColor)
             mesh.material.emissive.setHex(0x000000)
             mesh.material.emissiveIntensity = 0
+            mesh.material.roughness = 0.5
+            mesh.material.needsUpdate = true
           }
         })
       }

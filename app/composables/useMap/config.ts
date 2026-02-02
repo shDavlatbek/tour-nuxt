@@ -82,13 +82,14 @@ export const REGION_LABELS: Record<string, RegionLabelConfig> = {
   'samarkand': { name: 'SAMARKAND', direction: 'bottom-right', offsetX: 0, offsetY: 0, diagonalLength: 25, horizontalLength: 75, textOffsetX: -50, textOffsetY: 0 },
   'jizzakh': { name: 'JIZZAKH', direction: 'top-left', offsetX: 0, offsetY: 0, diagonalLength: 25, horizontalLength: 60, textOffsetX: 40, textOffsetY: 0 },
   'sirdaryo': { name: 'SIRDARYO', direction: 'top-right', offsetX: 0, offsetY: 0, diagonalLength: 25, horizontalLength: 60, textOffsetX: -40, textOffsetY: 0 },
-  'tashkent': { name: 'TASHKENT', direction: 'top-right', offsetX: 0, offsetY: 0, diagonalLength: 25, horizontalLength: 40, textOffsetX: 0, textOffsetY: 0 },
+  'tashkent': { name: 'TASHKENT', direction: 'top-left', offsetX: 0, offsetY: 0, diagonalLength: 25, horizontalLength: 60, textOffsetX: 40, textOffsetY: 0 },
+  // 'tashkent': { name: 'TASHKENT', direction: 'top-right', offsetX: 0, offsetY: 0, diagonalLength: 25, horizontalLength: 40, textOffsetX: 0, textOffsetY: 0 },
   'namangan': { name: 'NAMANGAN', direction: 'top-right', offsetX: 0, offsetY: 0, diagonalLength: 25, horizontalLength: 70, textOffsetX: -45, textOffsetY: 0 },
   'andijan': { name: 'ANDIJAN', direction: 'bottom-right', offsetX: 0, offsetY: 0, diagonalLength: 25, horizontalLength: 60, textOffsetX: -40, textOffsetY: 0 },
   'fergana': { name: 'FERGANA', direction: 'bottom-right', offsetX: 0, offsetY: 0, diagonalLength: 25, horizontalLength: 60, textOffsetX: -43, textOffsetY: 0 },
   'kashkadarya': { name: 'KASHKADARYA', direction: 'bottom-left', offsetX: 0, offsetY: 0, diagonalLength: 25, horizontalLength: 85, textOffsetX: 53, textOffsetY: 0 },
   'surkhandarya': { name: 'SURKHANDARYA', direction: 'bottom-right', offsetX: 0, offsetY: 0, diagonalLength: 25, horizontalLength: 90, textOffsetX: -55, textOffsetY: 0 },
-  'tashkentsh': { name: 'TASHKENT', direction: 'top-left', offsetX: 0, offsetY: 0, diagonalLength: 25, horizontalLength: 40, textOffsetX: 0, textOffsetY: 0 },
+  // 'tashkentsh': { name: 'TASHKENT', direction: 'top-left', offsetX: 0, offsetY: 0, diagonalLength: 25, horizontalLength: 40, textOffsetX: 0, textOffsetY: 0 },
 }
 
 // Fallback array for index-based lookup (when SVG has no IDs)

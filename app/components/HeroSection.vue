@@ -30,7 +30,10 @@ onUnmounted(() => {
 // Hide hint after first interaction
 function handleFirstInteraction() {
     if (!hasInteracted.value && !state.value.isLoading) {
-        hasInteracted.value = true
+        // Delay hiding by 3 seconds to let user see effect
+        setTimeout(() => {
+            hasInteracted.value = true
+        }, 3000)
         window.removeEventListener('mousemove', handleFirstInteraction)
         window.removeEventListener('touchstart', handleFirstInteraction)
     }
@@ -76,21 +79,17 @@ function handleBackClick() {
         <!-- Zoom Vignette -->
         <div class="hero__zoom-vignette" :class="{ 'hero__zoom-vignette--visible': showZoomVignette }" />
 
-        <!-- Mouse Hint -->
+        <!-- Mouse Hint with Figure-8 Animation -->
         <div class="hero__mouse-hint"
             :class="{ 'hero__mouse-hint--hidden': state.isZoomed || state.isLoading || hasInteracted }">
-            <div class="hero__mouse-hint-wrapper">
-                <div class="hero__mouse-hint-icon">
-                    <svg width="32" height="48" viewBox="0 0 32 48" fill="none">
-                        <rect x="2" y="2" width="28" height="44" rx="14" stroke="currentColor" stroke-width="2.5" />
-                        <circle cx="16" cy="14" r="4" fill="currentColor" />
-                    </svg>
-                </div>
-                <div class="hero__mouse-hint-arc">
-                    <svg width="80" height="24" viewBox="0 0 80 24" fill="none">
-                        <path class="hero__mouse-hint-arc-path" d="M10 12 Q40 2 70 12" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-dasharray="4 6" />
-                    </svg>
+            <div class="hero__mouse-hint-y">
+                <div class="hero__mouse-hint-x">
+                    <div class="hero__mouse-hint-icon">
+                        <svg width="32" height="48" viewBox="0 0 32 48" fill="none">
+                            <rect x="2" y="2" width="28" height="44" rx="14" stroke="currentColor" stroke-width="2.5" />
+                            <circle cx="16" cy="14" r="4" fill="currentColor" />
+                        </svg>
+                    </div>
                 </div>
             </div>
             <span class="hero__mouse-hint-text">Move mouse to explore</span>

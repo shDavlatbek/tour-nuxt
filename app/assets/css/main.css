@@ -224,8 +224,12 @@ body {
   }
 }
 
-/* Mouse Hint */
+/* Mouse Hint - Figure 8 Animation */
 .hero__mouse-hint {
+  --x-offset: 35px;
+  --y-offset: 12px;
+  --animation-duration: 2s;
+
   position: fixed;
   bottom: 50px;
   left: 50%;
@@ -244,29 +248,19 @@ body {
   opacity: 0;
 }
 
-.hero__mouse-hint-wrapper {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+/* Horizontal animation (slower - full duration) */
+.hero__mouse-hint-x {
+  animation: hint-horizontal var(--animation-duration) ease-in-out calc(-0.25 * var(--animation-duration)) alternate infinite;
+}
+
+/* Vertical animation (faster - half duration) */
+.hero__mouse-hint-y {
+  animation: hint-vertical calc(0.5 * var(--animation-duration)) ease-in-out alternate infinite;
 }
 
 .hero__mouse-hint-icon {
   color: rgba(255, 255, 255, 0.95);
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
-  animation: hint-arc 2.5s ease-in-out infinite;
-}
-
-.hero__mouse-hint-arc {
-  position: absolute;
-  bottom: -8px;
-  left: 50%;
-  transform: translateX(-50%);
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.hero__mouse-hint-arc-path {
-  animation: hint-arc-dash 2.5s linear infinite;
 }
 
 .hero__mouse-hint-text {
@@ -279,27 +273,28 @@ body {
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
-@keyframes hint-arc {
-  0%,
-  100% {
-    transform: translateX(-30px) translateY(3px);
+@keyframes hint-horizontal {
+  from {
+    transform: translateX(calc(-1 * var(--x-offset)));
   }
-  50% {
-    transform: translateX(30px) translateY(3px);
+  to {
+    transform: translateX(var(--x-offset));
   }
 }
 
-@keyframes hint-arc-dash {
-  0% {
-    stroke-dashoffset: 0;
+@keyframes hint-vertical {
+  from {
+    transform: translateY(calc(-1 * var(--y-offset)));
   }
-  100% {
-    stroke-dashoffset: -20;
+  to {
+    transform: translateY(var(--y-offset));
   }
 }
 
 @media (max-width: 768px) {
   .hero__mouse-hint {
+    --x-offset: 25px;
+    --y-offset: 8px;
     bottom: 35px;
   }
 
