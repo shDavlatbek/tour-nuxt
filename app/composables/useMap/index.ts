@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { Group } from '@tweenjs/tween.js'
+import { Group, Tween, Easing } from '@tweenjs/tween.js'
 import { ref } from 'vue'
 
 // Types
@@ -9,7 +9,7 @@ import type { MapState, UseMapReturn, CameraPosition } from './types'
 import { INITIAL_CAM_POS, LABEL_CONFIG, COLORS } from './config'
 
 // Utilities
-import { createFogTexture, createGridTexture } from './textures'
+import { createFogTexture } from './textures'
 import { createGrid, animateGrid } from './grid'
 import { updateMarkerScales, animateMarkers } from './markers'
 import { zoomIn, zoomOutCamera, updateParallax } from './camera'
@@ -306,33 +306,53 @@ export function useMap(): UseMapReturn {
       )
     }
     
-    // Highlight or reset region mesh colors
+    // Highlight or reset region mesh colors with smooth grid overlay animation
     function highlightRegionMeshes(marker: THREE.Group, highlight: boolean) {
       const meshes = marker.userData.regionMeshes as THREE.Mesh[] | undefined
       if (!meshes) return
-      
+
+      const targetMix = highlight ? 1.0 : 0.0
+
       meshes.forEach((mesh) => {
-        if (mesh.material instanceof THREE.MeshStandardMaterial) {
-          if (highlight) {
-            // Store original color if not already stored
-            if (mesh.userData.originalColor === undefined) {
-              mesh.userData.originalColor = mesh.material.color.getHex()
-            }
-            
-            // Apply bright highlight color with glow
-            mesh.material.color.setHex(COLORS.uzbekistanHighlight)
-            mesh.material.emissive.setHex(0x664400)
-            mesh.material.emissiveIntensity = 0.4
-            mesh.material.roughness = 0.3
-          } else {
-            // Restore original color
-            const originalColor = mesh.userData.originalColor ?? COLORS.uzbekistan
-            mesh.material.color.setHex(originalColor)
-            mesh.material.emissive.setHex(0x000000)
-            mesh.material.emissiveIntensity = 0
-            mesh.material.roughness = 0.5
+        if (!(mesh.material instanceof THREE.MeshStandardMaterial)) return
+
+        const mat = mesh.material
+        const userData = mat.userData
+
+        // Check if material has grid shader uniforms
+        if (userData?.gridMix) {
+          // Cancel any existing tween for this mesh
+          if (mesh.userData._highlightTween) {
+            mesh.userData._highlightTween.stop()
           }
-          mesh.material.needsUpdate = true
+
+          // Animate the gridMix uniform (like CodePen example)
+          const currentMix = userData.gridMix.value
+          mesh.userData._highlightTween = new Tween({ mix: currentMix }, tweenGroup)
+            .to({ mix: targetMix }, 500)
+            .easing(Easing.Quadratic.Out)
+            .onUpdate(({ mix }) => {
+              userData.gridMix.value = mix
+              // Also animate emissive for glow effect
+              mat.emissive.setHex(mix > 0 ? 0x332200 : 0x000000)
+              mat.emissiveIntensity = mix * 0.3
+            })
+            .onComplete(() => {
+              delete mesh.userData._highlightTween
+            })
+            .start()
+        } else {
+          // Fallback for materials without shader modification
+          if (highlight) {
+            mat.color.setHex(COLORS.uzbekistanHighlight)
+            mat.emissive.setHex(0x332200)
+            mat.emissiveIntensity = 0.3
+          } else {
+            mat.color.setHex(COLORS.uzbekistan)
+            mat.emissive.setHex(0x000000)
+            mat.emissiveIntensity = 0
+          }
+          mat.needsUpdate = true
         }
       })
     }
@@ -407,18 +427,42 @@ export function useMap(): UseMapReturn {
   }
 
   function zoomOut(): void {
-    // Reset all region mesh colors
+    // Reset all region mesh colors with animation
     interactablePoints.forEach((marker) => {
       const meshes = marker.userData.regionMeshes as THREE.Mesh[] | undefined
       if (meshes) {
         meshes.forEach((mesh) => {
           if (mesh.material instanceof THREE.MeshStandardMaterial) {
-            const originalColor = mesh.userData.originalColor ?? COLORS.uzbekistan
-            mesh.material.color.setHex(originalColor)
-            mesh.material.emissive.setHex(0x000000)
-            mesh.material.emissiveIntensity = 0
-            mesh.material.roughness = 0.5
-            mesh.material.needsUpdate = true
+            const mat = mesh.material
+            const userData = mat.userData
+
+            // Animate gridMix back to 0 if available
+            if (userData?.gridMix) {
+              // Cancel any existing tween
+              if (mesh.userData._highlightTween) {
+                mesh.userData._highlightTween.stop()
+              }
+
+              const currentMix = userData.gridMix.value
+              mesh.userData._highlightTween = new Tween({ mix: currentMix }, tweenGroup)
+                .to({ mix: 0 }, 400)
+                .easing(Easing.Quadratic.Out)
+                .onUpdate(({ mix }) => {
+                  userData.gridMix.value = mix
+                  mat.emissive.setHex(mix > 0 ? 0x332200 : 0x000000)
+                  mat.emissiveIntensity = mix * 0.3
+                })
+                .onComplete(() => {
+                  delete mesh.userData._highlightTween
+                })
+                .start()
+            } else {
+              // Fallback
+              mat.color.setHex(COLORS.uzbekistan)
+              mat.emissive.setHex(0x000000)
+              mat.emissiveIntensity = 0
+              mat.needsUpdate = true
+            }
           }
         })
       }

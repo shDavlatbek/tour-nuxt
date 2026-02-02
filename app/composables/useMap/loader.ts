@@ -3,9 +3,19 @@ import { SVGLoader } from 'three/examples/jsm/loaders/SVGLoader.js'
 import { Tween, Easing, Group } from '@tweenjs/tween.js'
 import type { Ref } from 'vue'
 import { MAP_SCALE, COUNTRY_NAMES, COLORS, EXTRUDE_DEPTHS } from './config'
-import { createTextSprite } from './textures'
+import { createTextSprite, createGridTexture } from './textures'
 import { createMarker } from './markers'
 import type { MapState } from './types'
+
+// Create a shared grid texture for all Uzbekistan regions
+let gridTexture: THREE.CanvasTexture | null = null
+function getGridTexture(): THREE.CanvasTexture {
+  if (!gridTexture) {
+    // 512 / 64 = 8 perfect cells, ensures uniform squares
+    gridTexture = createGridTexture(256, 32, 2, '#ff5e00ff', 1)
+  }
+  return gridTexture
+}
 
 /**
  * Loads the SVG map and creates 3D meshes
@@ -65,11 +75,84 @@ export async function loadMap(
               depth: EXTRUDE_DEPTHS.uzbekistan,
               bevelEnabled: false,
             })
+            
+            // Create material with grid overlay shader modification
             const material = new THREE.MeshStandardMaterial({
               color: COLORS.uzbekistan,
               roughness: 0.5,
               metalness: 0.1,
             })
+
+            // Store uniforms for grid blend animation (like CodePen example)
+            const gridTex = getGridTexture()
+            material.userData = {
+              gridMap: { value: gridTex },
+              gridMix: { value: 0.0 }, // 0 = no grid, 1 = full grid
+              highlightColor: { value: new THREE.Color(COLORS.uzbekistanHighlight) },
+            }
+
+            // Modify shader to blend grid overlay (similar to CodePen texture mix)
+            material.onBeforeCompile = (shader) => {
+              shader.uniforms.gridMap = material.userData.gridMap
+              shader.uniforms.gridMix = material.userData.gridMix
+              shader.uniforms.highlightColor = material.userData.highlightColor
+
+              // Add varying for world position (object-fixed coordinates)
+              shader.vertexShader = shader.vertexShader.replace(
+                '#include <common>',
+                `
+                #include <common>
+                varying vec3 vWorldPos;
+                `
+              ).replace(
+                '#include <worldpos_vertex>',
+                `
+                #include <worldpos_vertex>
+                vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;
+                `
+              )
+
+              shader.fragmentShader = `
+                uniform sampler2D gridMap;
+                uniform float gridMix;
+                uniform vec3 highlightColor;
+                varying vec3 vWorldPos;
+                
+                // 2D rotation function
+                vec2 rotateUV(vec2 uv, float angle) {
+                  float s = sin(angle);
+                  float c = cos(angle);
+                  return vec2(uv.x * c - uv.y * s, uv.x * s + uv.y * c);
+                }
+                
+                ${shader.fragmentShader}
+              `.replace(
+                '#include <color_fragment>',
+                `
+                #include <color_fragment>
+                
+                // Apply grid overlay when gridMix > 0
+                if (gridMix > 0.0) {
+                  // Use uniform scale for both X and Y to get perfect squares
+                  float gridScale = 0.02; // Adjust this for grid density
+                  vec2 gridUV = vWorldPos.xy * gridScale;
+                  
+                  // Rotate 45 degrees (PI/4 radians)
+                  gridUV = rotateUV(gridUV, 0.7854);
+                  
+                  // Sample grid texture
+                  vec4 gridColor = texture2D(gridMap, gridUV);
+                  
+                  // Mix highlight color based on gridMix
+                  vec3 highlightedBase = mix(diffuseColor.rgb, highlightColor, gridMix * 0.3);
+                  
+                  // Add grid lines on top - use TEXTURE COLOR, not white!
+                  float gridAlpha = gridColor.a * gridMix;
+                  diffuseColor.rgb = mix(highlightedBase, gridColor.rgb, gridAlpha);
+                }
+                `
+              )
+            }
 
             const mesh = new THREE.Mesh(geometry, material)
             mesh.castShadow = true

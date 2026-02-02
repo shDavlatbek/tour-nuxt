@@ -38,7 +38,8 @@ export const COLORS = {
   label: '#444444',
   labelCity: '#ffffff',
   labelLine: 0xffffff,
-  uzbekistanHighlight: 0xffcc33, // Brighter gold for selected region
+  // uzbekistanHighlight: 0xffcc33, // Brighter gold for selected region
+  uzbekistanHighlight: 0xffd24d, // Brighter gold for selected region
 }
 
 // Extrusion depths

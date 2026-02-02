@@ -230,6 +230,9 @@ body {
   --y-offset: 12px;
   --animation-duration: 2s;
 
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  padding: 24px;
   position: fixed;
   bottom: 50px;
   left: 50%;

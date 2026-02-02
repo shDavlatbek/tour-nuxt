@@ -82,3 +82,56 @@ export function createTextSprite(
 
   return sprite
 }
+
+/**
+ * Creates a grid overlay texture using canvas
+ * @param size - Texture size (power of 2 recommended)
+ * @param gridSpacing - Space between grid lines
+ * @param lineWidth - Width of grid lines
+ * @param lineColor - Color of grid lines
+ * @param lineAlpha - Alpha of grid lines
+ */
+export function createGridTexture(
+  size = 512,
+  gridSpacing = 32,
+  lineWidth = 2,
+  lineColor = '#ffffff',
+  lineAlpha = 0.6
+): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+
+  // Clear with transparent background
+  ctx.clearRect(0, 0, size, size)
+
+  // Draw grid lines
+  ctx.strokeStyle = lineColor
+  ctx.lineWidth = lineWidth
+  ctx.globalAlpha = lineAlpha
+
+  // Vertical lines
+  for (let x = 0; x <= size; x += gridSpacing) {
+    ctx.beginPath()
+    ctx.moveTo(x, 0)
+    ctx.lineTo(x, size)
+    ctx.stroke()
+  }
+
+  // Horizontal lines
+  for (let y = 0; y <= size; y += gridSpacing) {
+    ctx.beginPath()
+    ctx.moveTo(0, y)
+    ctx.lineTo(size, y)
+    ctx.stroke()
+  }
+
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.wrapS = THREE.RepeatWrapping
+  texture.wrapT = THREE.RepeatWrapping
+  // Don't set repeat here - let shader handle tiling for uniform squares
+  texture.needsUpdate = true
+
+  return texture
+}
