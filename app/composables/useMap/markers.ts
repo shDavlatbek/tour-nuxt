@@ -1,8 +1,14 @@
 import * as THREE from 'three'
 import { COLORS, INITIAL_CAM_POS, REGION_NAMES } from './config'
 
+// Ripple animation settings
+const RIPPLE_SPEED = 0.8 // Speed of ripple expansion
+const RIPPLE_MAX_SCALE = 1.5 // How far the ripple expands
+const RIPPLE_START_THICKNESS = 0.1 // Starting border thickness
+const RIPPLE_END_THICKNESS = 1.5 // Ending border thickness (grows like CSS border)
+
 /**
- * Creates an interactive marker for a region
+ * Creates an interactive marker for a region with ripple effect
  */
 export function createMarker(
   center: THREE.Vector3,
@@ -21,9 +27,10 @@ export function createMarker(
     opacity: 1.0,
   })
   const pointMesh = new THREE.Mesh(pointGeo, pointMat)
+  pointMesh.name = 'centerPoint'
   markerGroup.add(pointMesh)
 
-  // Outer ring
+  // Static outer ring
   const ringGeo = new THREE.TorusGeometry(6, 0.8, 16, 32)
   const ringMat = new THREE.MeshBasicMaterial({
     color: COLORS.marker,
@@ -31,7 +38,22 @@ export function createMarker(
     opacity: 0.8,
   })
   const ringMesh = new THREE.Mesh(ringGeo, ringMat)
+  ringMesh.name = 'staticRing'
   markerGroup.add(ringMesh)
+
+  // Ripple ring - single expanding ring with growing border
+  // Using TorusGeometry for the ripple (tube radius = border thickness)
+  const rippleGeo = new THREE.TorusGeometry(6, RIPPLE_START_THICKNESS, 16, 64)
+  const rippleMat = new THREE.MeshBasicMaterial({
+    color: COLORS.marker,
+    transparent: true,
+    opacity: 0.7,
+  })
+  const rippleMesh = new THREE.Mesh(rippleGeo, rippleMat)
+  rippleMesh.name = 'ripple'
+  rippleMesh.userData.isRipple = true
+  rippleMesh.userData.baseRadius = 6
+  markerGroup.add(rippleMesh)
 
   // Marker metadata
   markerGroup.userData.zoomDistance = maxDimension * 4 + 100
@@ -40,6 +62,7 @@ export function createMarker(
   markerGroup.userData.regionIndex = regionIndex
   markerGroup.userData.regionId = regionId || `region-${regionIndex}`
   markerGroup.userData.regionName = REGION_NAMES[regionIndex] || `REGION ${regionIndex + 1}`
+  markerGroup.userData.ripple = rippleMesh
 
   return markerGroup
 }
@@ -68,14 +91,35 @@ export function updateMarkerScales(
 }
 
 /**
- * Animates markers with a bobbing motion
+ * Animates markers with a CSS-style ripple effect
+ * Single ring expands outward with growing border thickness, then fades to 0
  */
 export function animateMarkers(
   interactablePoints: THREE.Group[],
   elapsedTime: number
 ): void {
   interactablePoints.forEach((point, index) => {
-    const bob = Math.sin(elapsedTime * 2 + index * 0.5) * 5
-    point.position.z = point.userData.baseZ + bob
+    const ripple = point.userData.ripple as THREE.Mesh | undefined
+    
+    if (!ripple || !ripple.userData.isRipple) return
+
+    const baseRadius = ripple.userData.baseRadius as number
+    
+    // Calculate ripple progress (0 to 1, repeating)
+    const progress = ((elapsedTime * RIPPLE_SPEED + index * 0.3) % 1)
+    
+    // Ring expands as progress increases
+    const currentRadius = baseRadius * (1 + progress * (RIPPLE_MAX_SCALE - 1))
+    
+    // Border thickness grows from thin to thick (like CSS border animation)
+    const thickness = RIPPLE_START_THICKNESS + progress * (RIPPLE_END_THICKNESS - RIPPLE_START_THICKNESS)
+    
+    // Recreate geometry with new radius and thickness
+    ripple.geometry.dispose()
+    ripple.geometry = new THREE.TorusGeometry(currentRadius, thickness, 16, 64)
+    
+    // Opacity fades from 0.7 to 0 as ripple expands
+    const material = ripple.material as THREE.MeshBasicMaterial
+    material.opacity = 0.7 * (1 - progress)
   })
 }
