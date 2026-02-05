@@ -57,7 +57,7 @@ export const COLORS = {
 
 // Extrusion depths
 export const EXTRUDE_DEPTHS = {
-  uzbekistan: 5,
+  uzbekistan: 1,
   sea: 1,
   neighbor: 3,
 }

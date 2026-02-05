@@ -80,6 +80,8 @@ export async function loadMap(
             // Create material with grid overlay shader modification
             const material = new THREE.MeshStandardMaterial({
               color: COLORS.uzbekistan,
+              transparent: true,
+              opacity: 0.85,
               roughness: 0.1,
               metalness: 0.1,
               emissive: COLORS.uzbekistan, 
