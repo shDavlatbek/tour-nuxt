@@ -23,8 +23,8 @@ const sectionStyle = computed(() => {
 <template>
     <section class="about-section" :style="sectionStyle">
         <div class="about-content">
-            <h2 class="about-title">Discover Uzbekistan</h2>
-            <p class="about-subtitle">Journey Through Ancient Silk Road Treasures</p>
+            <p class="about-subtitle">ABOUT</p>
+            <h2 class="about-title">What is Tourism Village</h2>
 
             <div class="about-description">
                 <p>
@@ -84,15 +84,15 @@ const sectionStyle = computed(() => {
     font-size: 4rem;
     font-weight: 400;
     color: var(--primary-color);
-    margin: 0 0 16px 0;
-    letter-spacing: 0.02em;
+    margin: 0 0 48px 0;
+    letter-spacing: 0.05em;
 }
 
 .about-subtitle {
     font-family: var(--font-serif);
     font-size: 1.4rem;
     color: var(--gold-color);
-    margin: 0 0 48px 0;
+    margin: 0 0 16px 0;
     letter-spacing: 0.1em;
     text-transform: uppercase;
 }

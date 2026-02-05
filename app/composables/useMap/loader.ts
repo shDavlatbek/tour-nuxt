@@ -85,7 +85,7 @@ export async function loadMap(
               roughness: 0.1,
               metalness: 0.1,
               emissive: COLORS.uzbekistan, 
-              emissiveIntensity: 0.4
+              emissiveIntensity: 0.6
             })
 
             // Store uniforms for grid blend animation (like CodePen example)

@@ -78,5 +78,6 @@ const isVisible = computed(() => props.progress > 0)
     /* GPU acceleration without expensive blur */
     transform: translate3d(0, 0, 0);
     backface-visibility: hidden;
+    filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.5));
 }
 </style>

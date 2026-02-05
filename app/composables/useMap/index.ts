@@ -337,10 +337,10 @@ export function useMap(): UseMapReturn {
               // Animate emissive - when highlight off, restore to original (COLORS.uzbekistan with 0.4 intensity)
               if (mix > 0) {
                 mat.emissive.setHex(COLORS.uzbekistan)
-                mat.emissiveIntensity = 0.4 + mix * 0.2
+                mat.emissiveIntensity = 0.6 + mix * 0.2
               } else {
                 mat.emissive.setHex(COLORS.uzbekistan)
-                mat.emissiveIntensity = 0.4
+                mat.emissiveIntensity = 0.6
               }
             })
             .onComplete(() => {
@@ -357,7 +357,7 @@ export function useMap(): UseMapReturn {
             // Reset to original material values from loader.ts
             mat.color.setHex(COLORS.uzbekistan)
             mat.emissive.setHex(COLORS.uzbekistan)
-            mat.emissiveIntensity = 0.4
+            mat.emissiveIntensity = 0.6
           }
           mat.needsUpdate = true
         }
@@ -459,10 +459,10 @@ export function useMap(): UseMapReturn {
                   // When mix reaches 0, restore original emissive
                   if (mix > 0.01) {
                     mat.emissive.setHex(COLORS.uzbekistan)
-                    mat.emissiveIntensity = 0.4 + mix * 0.2
+                    mat.emissiveIntensity = 0.6 + mix * 0.2
                   } else {
                     mat.emissive.setHex(COLORS.uzbekistan)
-                    mat.emissiveIntensity = 0.4
+                    mat.emissiveIntensity = 0.6
                   }
                 })
                 .onComplete(() => {
@@ -473,7 +473,7 @@ export function useMap(): UseMapReturn {
               // Fallback - restore original material values
               mat.color.setHex(COLORS.uzbekistan)
               mat.emissive.setHex(COLORS.uzbekistan)
-              mat.emissiveIntensity = 0.4
+              mat.emissiveIntensity = 0.6
               mat.needsUpdate = true
             }
           }
