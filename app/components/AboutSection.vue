@@ -40,10 +40,14 @@ const backgroundStyle = computed(() => {
 
 // Text should be light when background image is showing
 const hasImageBackground = computed(() => showBackgroundImage.value)
+
+// Enable pointer events when section is fully visible (can click button)
+const isInteractive = computed(() => props.progress > 0.95)
 </script>
 
 <template>
-    <section class="about-section" :style="sectionStyle" :class="{ 'about-section--dark': hasImageBackground }">
+    <section class="about-section" :style="sectionStyle"
+        :class="{ 'about-section--dark': hasImageBackground, 'about-section--interactive': isInteractive }">
         <!-- Background image layer -->
         <div v-if="backgroundImage" class="about-background" :style="backgroundStyle" />
         <!-- Overlay for readability -->
@@ -80,6 +84,8 @@ const hasImageBackground = computed(() => showBackgroundImage.value)
                     <span class="stat-label">Tourism Villages</span>
                 </div>
             </div>
+
+            <button class="about-button">Explore More</button>
         </div>
     </section>
 </template>
@@ -98,6 +104,10 @@ const hasImageBackground = computed(() => showBackgroundImage.value)
     justify-content: center;
     will-change: transform, opacity;
     pointer-events: none;
+}
+
+.about-section--interactive {
+    pointer-events: auto;
 }
 
 .about-background {
@@ -173,6 +183,28 @@ const hasImageBackground = computed(() => showBackgroundImage.value)
     display: flex;
     justify-content: center;
     gap: 80px;
+    margin-bottom: 60px;
+}
+
+.about-button {
+    padding: 16px 40px;
+    background-color: var(--primary-color);
+    color: white;
+    border: 2px solid var(--primary-color);
+    /* border-radius: 50px; */
+    font-family: var(--font-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.about-button:hover {
+    background-color: white;
+    color: var(--primary-color);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
 .stat-item {

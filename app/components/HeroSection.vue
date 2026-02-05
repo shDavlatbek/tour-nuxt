@@ -5,19 +5,33 @@ import { useMap } from '../composables/useMap'
 interface Props {
     frozen?: boolean
     zoomProgress?: number
+    hidden?: boolean // Hide canvas when About section is visible
 }
 
 const props = withDefaults(defineProps<Props>(), {
     frozen: false,
     zoomProgress: 0,
+    hidden: false,
 })
 
-const { state, init, dispose, zoomOut, freeze, unfreeze, setScrollZoom } = useMap()
+const { state, init, dispose, zoomOut, freeze, unfreeze, setScrollZoom, pause, resume } = useMap()
 
 const mapContainer = ref<HTMLElement | null>(null)
 const showZoomVignette = ref(false)
 const hasInteracted = ref(false)
 const showClickHint = ref(false)
+
+// Pause/resume map based on hidden prop (for performance when About section is visible)
+watch(
+    () => props.hidden,
+    (isHidden) => {
+        if (isHidden) {
+            pause()
+        } else {
+            resume()
+        }
+    }
+)
 
 // Initialize map on mount - use nextTick to ensure ClientOnly has rendered
 onMounted(async () => {

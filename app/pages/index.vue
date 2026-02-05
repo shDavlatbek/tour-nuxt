@@ -29,7 +29,8 @@ function handleMapZoomChange(zoomed: boolean) {
             <div class="vignette-overlay" />
 
             <!-- Hero Section -->
-            <HeroSection :frozen="isFrozen" :zoom-progress="zoomProgress" @zoom-change="handleMapZoomChange" />
+            <HeroSection :frozen="isFrozen" :zoom-progress="zoomProgress" :hidden="aboutProgress > 0.9"
+                @zoom-change="handleMapZoomChange" />
 
             <!-- Cloud Overlay - appears during scroll -->
             <ClientOnly>

@@ -4,6 +4,7 @@ export interface MapState {
   isZoomed: boolean
   isLoading: boolean
   isFrozen: boolean
+  isPaused: boolean // Completely stops rendering and events
 }
 
 export interface UseMapReturn {
@@ -14,6 +15,8 @@ export interface UseMapReturn {
   freeze: () => void
   unfreeze: () => void
   setScrollZoom: (progress: number) => void
+  pause: () => void
+  resume: () => void
 }
 
 

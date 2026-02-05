@@ -24,6 +24,7 @@ export function useMap(): UseMapReturn {
     isZoomed: false,
     isLoading: true,
     isFrozen: false,
+    isPaused: false,
   })
 
   // Reactive state for animation control
@@ -112,6 +113,9 @@ export function useMap(): UseMapReturn {
 
   function animate(): void {
     animationFrameId = requestAnimationFrame(animate)
+
+    // Skip rendering when paused
+    if (state.value.isPaused) return
 
     const delta = clock.getDelta()
     const elapsedTime = clock.getElapsedTime()
@@ -234,7 +238,8 @@ export function useMap(): UseMapReturn {
     }
 
     handleClick = (e: MouseEvent) => {
-      if (state.value.isZoomed) return
+      // Skip click handling when paused or zoomed
+      if (state.value.isPaused || state.value.isZoomed) return
 
       mouse.x = (e.clientX / window.innerWidth) * 2 - 1
       mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
@@ -522,6 +527,20 @@ export function useMap(): UseMapReturn {
     camera.position.z = targetZ
   }
 
+  /**
+   * Pause rendering and event handling (for performance when hidden)
+   */
+  function pause(): void {
+    state.value.isPaused = true
+  }
+
+  /**
+   * Resume rendering and event handling
+   */
+  function resume(): void {
+    state.value.isPaused = false
+  }
+
   return {
     state,
     init,
@@ -530,6 +549,8 @@ export function useMap(): UseMapReturn {
     freeze,
     unfreeze,
     setScrollZoom,
+    pause,
+    resume,
   }
 }
 
