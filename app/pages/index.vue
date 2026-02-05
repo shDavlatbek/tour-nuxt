@@ -11,7 +11,7 @@ useSeoMeta({
 })
 
 // Scroll transition state - uses native scroll
-const { isFrozen, cloudProgress, aboutProgress } = useScrollTransition()
+const { isFrozen, zoomProgress, cloudProgress, aboutProgress } = useScrollTransition()
 </script>
 
 <template>
@@ -24,7 +24,7 @@ const { isFrozen, cloudProgress, aboutProgress } = useScrollTransition()
             <div class="vignette-overlay" />
 
             <!-- Hero Section -->
-            <HeroSection :frozen="isFrozen" />
+            <HeroSection :frozen="isFrozen" :zoom-progress="zoomProgress" />
 
             <!-- Cloud Overlay - appears during scroll -->
             <ClientOnly>

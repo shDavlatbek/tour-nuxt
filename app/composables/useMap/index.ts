@@ -507,6 +507,21 @@ export function useMap(): UseMapReturn {
     // Labels will be shown again via proximity detection in animate loop
   }
 
+  /**
+   * Set camera zoom based on scroll progress (0-1)
+   * 0 = normal view (INITIAL_CAM_POS.z = 1200)
+   * 1 = zoomed out (z = 2500)
+   */
+  function setScrollZoom(progress: number): void {
+    if (!camera) return
+    
+    const startZ = INITIAL_CAM_POS.z // 1200
+    const endZ = 2500 // Zoomed out
+    const targetZ = startZ + (endZ - startZ) * progress
+    
+    camera.position.z = targetZ
+  }
+
   return {
     state,
     init,
@@ -514,6 +529,7 @@ export function useMap(): UseMapReturn {
     zoomOut,
     freeze,
     unfreeze,
+    setScrollZoom,
   }
 }
 

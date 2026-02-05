@@ -4,13 +4,15 @@ import { useMap } from '../composables/useMap'
 
 interface Props {
     frozen?: boolean
+    zoomProgress?: number
 }
 
 const props = withDefaults(defineProps<Props>(), {
     frozen: false,
+    zoomProgress: 0,
 })
 
-const { state, init, dispose, zoomOut, freeze, unfreeze } = useMap()
+const { state, init, dispose, zoomOut, freeze, unfreeze, setScrollZoom } = useMap()
 
 const mapContainer = ref<HTMLElement | null>(null)
 const showZoomVignette = ref(false)
@@ -77,6 +79,14 @@ watch(
         } else {
             unfreeze()
         }
+    }
+)
+
+// Watch zoomProgress to zoom camera in/out
+watch(
+    () => props.zoomProgress,
+    (progress) => {
+        setScrollZoom(progress)
     }
 )
 

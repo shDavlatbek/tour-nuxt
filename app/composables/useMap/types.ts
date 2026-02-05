@@ -13,6 +13,7 @@ export interface UseMapReturn {
   zoomOut: () => void
   freeze: () => void
   unfreeze: () => void
+  setScrollZoom: (progress: number) => void
 }
 
 

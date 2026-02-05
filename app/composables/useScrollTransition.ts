@@ -6,6 +6,12 @@ export function useScrollTransition() {
   // Computed transition phases
   const isFrozen = computed(() => scrollProgress.value > 0.05)
   
+  // Zoom: starts immediately, finishes at 0.5
+  const zoomProgress = computed(() => {
+    if (scrollProgress.value > 0.5) return 1
+    return scrollProgress.value / 0.5
+  })
+  
   // Clouds: start at 0.15, fully covering at 0.7
   const cloudProgress = computed(() => {
     if (scrollProgress.value < 0.15) return 0
@@ -52,6 +58,7 @@ export function useScrollTransition() {
   return {
     scrollProgress,
     isFrozen,
+    zoomProgress,
     cloudProgress,
     aboutProgress,
     reset,
