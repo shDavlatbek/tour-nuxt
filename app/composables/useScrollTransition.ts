@@ -2,14 +2,6 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 export function useScrollTransition() {
   const scrollProgress = ref(0)
-  const targetProgress = ref(0)
-  
-  // Scroll settings
-  const SCROLL_SPEED = 0.002 // Sensitivity per wheel delta
-  const LERP_SPEED = 0.1 // Faster interpolation
-  
-  let animationFrame: number | null = null
-  let isAnimating = false
   
   // Computed transition phases
   const isFrozen = computed(() => scrollProgress.value > 0.05)
@@ -23,58 +15,37 @@ export function useScrollTransition() {
   
   // About: start at 0.5, fully visible at 1.0
   const aboutProgress = computed(() => {
-    if (scrollProgress.value < 0.3) return 0
-    if (scrollProgress.value > 0.9) return 1
-    return (scrollProgress.value - 0.3) / 0.6
+    if (scrollProgress.value < 0.5) return 0
+    return (scrollProgress.value - 0.5) / 0.5
   })
   
-  function animate() {
-    const diff = targetProgress.value - scrollProgress.value
+  function handleScroll() {
+    // Calculate progress based on scroll position
+    // scrollHeight - innerHeight = max scroll distance
+    const scrollTop = window.scrollY || document.documentElement.scrollTop
+    const maxScroll = document.documentElement.scrollHeight - window.innerHeight
     
-    if (Math.abs(diff) > 0.001) {
-      scrollProgress.value += diff * LERP_SPEED
-      animationFrame = requestAnimationFrame(animate)
-    } else {
-      scrollProgress.value = targetProgress.value
-      isAnimating = false
-      animationFrame = null
+    if (maxScroll > 0) {
+      scrollProgress.value = Math.min(1, Math.max(0, scrollTop / maxScroll))
     }
-  }
-  
-  function startAnimation() {
-    if (!isAnimating) {
-      isAnimating = true
-      animate()
-    }
-  }
-  
-  function handleWheel(e: WheelEvent) {
-    e.preventDefault()
-    
-    const delta = e.deltaY * SCROLL_SPEED
-    targetProgress.value = Math.max(0, Math.min(1, targetProgress.value + delta))
-    
-    // Only animate when needed
-    startAnimation()
   }
   
   function reset() {
-    targetProgress.value = 0
+    window.scrollTo(0, 0)
     scrollProgress.value = 0
   }
   
   onMounted(() => {
     if (typeof window !== 'undefined') {
-      window.addEventListener('wheel', handleWheel, { passive: false })
+      window.addEventListener('scroll', handleScroll, { passive: true })
+      // Initial check
+      handleScroll()
     }
   })
   
   onUnmounted(() => {
     if (typeof window !== 'undefined') {
-      window.removeEventListener('wheel', handleWheel)
-    }
-    if (animationFrame !== null) {
-      cancelAnimationFrame(animationFrame)
+      window.removeEventListener('scroll', handleScroll)
     }
   })
   
