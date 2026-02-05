@@ -5,7 +5,7 @@
 - `app/composables/useMap/index.ts` - main entry, scene setup, animate loop
 - `app/composables/useMap/config.ts` - colors, scales, region label configs
 - `app/composables/useMap/labels.ts` - city name labels with leader lines
-- `app/composables/useMap/markers.ts` - region markers (circles)
+- `app/composables/useMap/markers.ts` - region markers with ripple animation
 - `app/composables/useMap/camera.ts` - zoom in/out, parallax
 - `app/composables/useMap/loader.ts` - SVG loading, grid shader setup
 - `app/composables/useMap/grid.ts` - background grid
@@ -111,6 +111,35 @@ NEVER use `import TWEEN from` or `import * as TWEEN`.
 - `selectedRegionId` - tracks clicked region for label handling
 - `isZoomAnimating.value` - blocks parallax during tween
 - `zoomBlend.value` - 0-1 transition for zoom out
+
+## Marker Ripple Animation
+
+CSS-style ripple effect on markers - ring expands with growing border thickness, fades out:
+
+```ts
+// markers.ts - configurable settings
+const RIPPLE_SPEED = 0.8; // Expansion speed
+const RIPPLE_MAX_SCALE = 1.5; // Max ring expansion (1.5x base)
+const RIPPLE_START_THICKNESS = 0.1; // Starting border width
+const RIPPLE_END_THICKNESS = 1.5; // Ending border width
+```
+
+### Animation Cycle
+
+1. Ring starts at base radius (6) with thin border (0.1)
+2. Expands outward while border thickness grows (0.1 → 1.5)
+3. Opacity fades from 0.7 → 0
+4. Resets and repeats continuously
+
+### Marker Structure
+
+```ts
+markerGroup = {
+  centerPoint: SphereGeometry(3)      // Solid center dot
+  staticRing: TorusGeometry(6, 0.8)   // Fixed outer ring
+  ripple: TorusGeometry(6, dynamic)   // Animated ripple ring
+}
+```
 
 ## Don'ts
 

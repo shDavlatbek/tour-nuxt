@@ -1,4 +1,5 @@
 import * as THREE from 'three'
+import { COUNTRY_LABEL_CONFIG } from './config'
 
 /**
  * Creates a cloud/fog texture using canvas
@@ -36,23 +37,58 @@ export function createFogTexture(): THREE.CanvasTexture {
 }
 
 /**
+ * Draws text with custom letter-spacing (canvas doesn't support this natively)
+ */
+function drawTextWithSpacing(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  letterSpacing: number
+): void {
+  const chars = text.split('')
+  
+  // Calculate total width for center alignment
+  let totalWidth = 0
+  chars.forEach((char, i) => {
+    totalWidth += ctx.measureText(char).width
+    if (i < chars.length - 1) totalWidth += letterSpacing
+  })
+  
+  // Start from center minus half width
+  let currentX = x - totalWidth / 2
+  chars.forEach((char) => {
+    ctx.fillText(char, currentX + ctx.measureText(char).width / 2, y)
+    currentX += ctx.measureText(char).width + letterSpacing
+  })
+}
+
+/**
  * Creates a text sprite for country labels
  */
 export function createTextSprite(
   text: string,
-  fontSize = 40,
-  color = '#555555'
+  fontSize = COUNTRY_LABEL_CONFIG.fontSize,
+  color = COUNTRY_LABEL_CONFIG.color
 ): THREE.Sprite {
   const canvas = document.createElement('canvas')
   const ctx = canvas.getContext('2d')!
 
+  // Uppercase the text
+  const upperText = text.toUpperCase()
+  
   const scale = 2
   const scaledFontSize = fontSize * scale
-  const fontString = 'bold ' + scaledFontSize + 'px Arial'
+  const fontString = `bold ${scaledFontSize}px ${COUNTRY_LABEL_CONFIG.fontFamily}, sans-serif`
+  const letterSpacing = COUNTRY_LABEL_CONFIG.letterSpacing * scale
 
+  // Measure text with letter spacing
   ctx.font = fontString
-  const metrics = ctx.measureText(text)
-  const textWidth = metrics.width
+  let textWidth = 0
+  upperText.split('').forEach((char, i) => {
+    textWidth += ctx.measureText(char).width
+    if (i < upperText.length - 1) textWidth += letterSpacing
+  })
 
   canvas.width = Math.ceil(textWidth + 40 * scale)
   canvas.height = Math.ceil(scaledFontSize + 20 * scale)
@@ -63,7 +99,7 @@ export function createTextSprite(
   ctx.textBaseline = 'middle'
   ctx.imageSmoothingEnabled = true
   ctx.imageSmoothingQuality = 'high'
-  ctx.fillText(text, canvas.width / 2, canvas.height / 2)
+  drawTextWithSpacing(ctx, upperText, canvas.width / 2, canvas.height / 2, letterSpacing)
 
   const texture = new THREE.CanvasTexture(canvas)
   texture.needsUpdate = true

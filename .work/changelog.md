@@ -1,5 +1,30 @@
 # Map Changelog
 
+## 2026-02-04
+
+### Added
+
+- **Marker ripple animation** - CSS-style breathing effect:
+  - Single ring expands outward with growing border thickness
+  - Border animates from thin (0.1) to thick (1.5)
+  - Opacity fades from 0.7 → 0 as ring expands
+  - Configurable: `RIPPLE_SPEED`, `RIPPLE_MAX_SCALE`, `RIPPLE_START/END_THICKNESS`
+  - Replaced previous Y-axis bobbing animation
+
+- **Local font system** with `@font-face` declarations:
+  - Sabon LT Std (Roman 400, Bold 700) - serif body text
+  - Shipley (Regular 400) - display/heading text
+  - CSS variables: `--font-primary`, `--font-serif`, `--font-display`
+
+### Changed
+
+- `markers.ts`: Refactored `animateMarkers()` for ripple effect
+- `markers.ts`: Marker structure now includes `ripple` TorusGeometry
+- `main.css`: Added font-face declarations and font CSS variables
+- `main.css`: UI elements now use `var(--font-display)` for Shipley font
+
+---
+
 ## 2026-02-03
 
 ### Added

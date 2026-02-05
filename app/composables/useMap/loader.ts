@@ -12,7 +12,8 @@ let gridTexture: THREE.CanvasTexture | null = null
 function getGridTexture(): THREE.CanvasTexture {
   if (!gridTexture) {
     // 512 / 64 = 8 perfect cells, ensures uniform squares
-    gridTexture = createGridTexture(256, 32, 2, '#ff5e00ff', 1)
+    // gridTexture = createGridTexture(256, 32, 2, '#ff5e00ff', 1)
+    gridTexture = createGridTexture(256, 32, 2, COLORS.highlightGridColor, 1)
   }
   return gridTexture
 }
@@ -79,8 +80,10 @@ export async function loadMap(
             // Create material with grid overlay shader modification
             const material = new THREE.MeshStandardMaterial({
               color: COLORS.uzbekistan,
-              roughness: 0.5,
+              roughness: 0.1,
               metalness: 0.1,
+              emissive: COLORS.uzbekistan, 
+              emissiveIntensity: 0.4
             })
 
             // Store uniforms for grid blend animation (like CodePen example)

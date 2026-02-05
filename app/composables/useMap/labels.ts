@@ -2,6 +2,42 @@ import * as THREE from 'three'
 import { Tween, Easing, Group } from '@tweenjs/tween.js'
 import { LABEL_CONFIG, COLORS, REGION_LABELS, type RegionLabelConfig } from './config'
 
+/**
+ * Draws text with custom letter-spacing (canvas doesn't support this natively)
+ */
+function drawTextWithSpacing(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  letterSpacing: number,
+  align: CanvasTextAlign = 'left'
+): void {
+  const chars = text.split('')
+  
+  // Calculate total width for alignment
+  let totalWidth = 0
+  chars.forEach((char, i) => {
+    totalWidth += ctx.measureText(char).width
+    if (i < chars.length - 1) totalWidth += letterSpacing
+  })
+  
+  // Adjust starting X based on alignment
+  let startX = x
+  if (align === 'center') {
+    startX = x - totalWidth / 2
+  } else if (align === 'right') {
+    startX = x - totalWidth
+  }
+  
+  // Draw each character
+  let currentX = startX
+  chars.forEach((char, i) => {
+    ctx.fillText(char, currentX, y)
+    currentX += ctx.measureText(char).width + letterSpacing
+  })
+}
+
 export interface CityLabel {
   group: THREE.Group
   textSprite: THREE.Sprite
@@ -172,10 +208,14 @@ function createLabelSprite(text: string, direction: string): THREE.Sprite {
   const fontSize = LABEL_CONFIG.fontSize * scale
   const fontString = `bold ${fontSize}px ${LABEL_CONFIG.fontFamily}, sans-serif`
 
-  // Measure text
+  // Measure text with letter spacing
   ctx.font = fontString
-  const metrics = ctx.measureText(text)
-  const textWidth = metrics.width
+  const letterSpacing = (LABEL_CONFIG.letterSpacing || 3) * scale
+  let textWidth = 0
+  text.split('').forEach((char, i) => {
+    textWidth += ctx.measureText(char).width
+    if (i < text.length - 1) textWidth += letterSpacing
+  })
 
   canvas.width = Math.ceil(textWidth + 60 * scale)
   canvas.height = Math.ceil(fontSize * 4) // Extra height for vertical offset
@@ -203,12 +243,12 @@ function createLabelSprite(text: string, direction: string): THREE.Sprite {
   ctx.shadowOffsetX = 0
   ctx.shadowOffsetY = 0
   ctx.fillStyle = 'rgba(0, 0, 0, 0.6)'
-  ctx.fillText(text, textX, centerY)
+  drawTextWithSpacing(ctx, text, textX, centerY, letterSpacing, getTextAlign(direction))
   
   // Dark shadow layer
   ctx.shadowBlur = 4 * scale
   ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'
-  ctx.fillText(text, textX + 2, centerY + 2)
+  drawTextWithSpacing(ctx, text, textX + 2, centerY + 2, letterSpacing, getTextAlign(direction))
   
   // Reset shadow for main text
   ctx.shadowColor = 'transparent'
@@ -218,7 +258,7 @@ function createLabelSprite(text: string, direction: string): THREE.Sprite {
   
   // Main text
   ctx.fillStyle = COLORS.labelCity
-  ctx.fillText(text, textX, centerY)
+  drawTextWithSpacing(ctx, text, textX, centerY, letterSpacing, getTextAlign(direction))
 
   const texture = new THREE.CanvasTexture(canvas)
   texture.needsUpdate = true

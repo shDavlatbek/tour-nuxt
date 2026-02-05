@@ -20,16 +20,26 @@ export const COUNTRY_NAMES: Record<string, string> = {
   ir: 'Iran',
 }
 
+// Country label configuration (neighboring countries)
+export const COUNTRY_LABEL_CONFIG = {
+  fontSize: 40,
+  fontFamily: 'Shipley',
+  letterSpacing: 3, // Extra spacing between characters (px)
+  color: '#555555',
+}
+
 // Grid settings
 export const GRID_SPACING = 40
 export const GRID_SIZE = 2000
 
 // Colors
 export const COLORS = {
-  uzbekistan: 0xffee57,
+  uzbekistan: 0xC1A479,
+  // uzbekistan: 0xffee57,
   uzbekistanBorder: 0x4a5a2b,
   sea: 0xcce5ff,
   // sea: 0x4a90d9,
+  // neighbor: 0xFFF5DD,
   neighbor: 0xf5f5f5,
   neighborBorder: 0x888888,
   grid: 0xb4b4aa,
@@ -39,7 +49,10 @@ export const COLORS = {
   labelCity: '#ffffff',
   labelLine: 0xffffff,
   // uzbekistanHighlight: 0xffcc33, // Brighter gold for selected region
-  uzbekistanHighlight: 0xffd24d, // Brighter gold for selected region
+  // uzbekistanHighlight: 0xffd24d, // Brighter gold for selected region
+  // uzbekistanHighlight: 0xa88a5d, // Brighter gold for selected region
+  uzbekistanHighlight: 0xbf9e6b, // Brighter gold for selected region
+  highlightGridColor:'#5f2300ff'
 }
 
 // Extrusion depths
@@ -54,7 +67,8 @@ export const LABEL_CONFIG = {
   revealRadius: 150,
   fontSize: 28,
   animationDuration: 300,
-  fontFamily: 'Outfit',
+  fontFamily: 'Shipley',
+  letterSpacing: 4, // Extra spacing between characters (px)
 }
 
 // Per-region label positioning config

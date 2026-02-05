@@ -188,10 +188,10 @@ export function useMap(): UseMapReturn {
     container.appendChild(renderer.domElement)
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7)
+    const ambientLight = new THREE.AmbientLight(0xffffff, 1)
     scene.add(ambientLight)
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8)
+    const dirLight = new THREE.DirectionalLight(0xffffff, 2)
     dirLight.position.set(200, 500, 400)
     dirLight.castShadow = true
     dirLight.shadow.mapSize.width = 2048
@@ -333,9 +333,14 @@ export function useMap(): UseMapReturn {
             .easing(Easing.Quadratic.Out)
             .onUpdate(({ mix }) => {
               userData.gridMix.value = mix
-              // Also animate emissive for glow effect
-              mat.emissive.setHex(mix > 0 ? 0x332200 : 0x000000)
-              mat.emissiveIntensity = mix * 0.3
+              // Animate emissive - when highlight off, restore to original (COLORS.uzbekistan with 0.4 intensity)
+              if (mix > 0) {
+                mat.emissive.setHex(COLORS.uzbekistan)
+                mat.emissiveIntensity = 0.4 + mix * 0.2
+              } else {
+                mat.emissive.setHex(COLORS.uzbekistan)
+                mat.emissiveIntensity = 0.4
+              }
             })
             .onComplete(() => {
               delete mesh.userData._highlightTween
@@ -345,12 +350,13 @@ export function useMap(): UseMapReturn {
           // Fallback for materials without shader modification
           if (highlight) {
             mat.color.setHex(COLORS.uzbekistanHighlight)
-            mat.emissive.setHex(0x332200)
+            mat.emissive.setHex(COLORS.uzbekistanHighlight)
             mat.emissiveIntensity = 0.3
           } else {
+            // Reset to original material values from loader.ts
             mat.color.setHex(COLORS.uzbekistan)
-            mat.emissive.setHex(0x000000)
-            mat.emissiveIntensity = 0
+            mat.emissive.setHex(COLORS.uzbekistan)
+            mat.emissiveIntensity = 0.4
           }
           mat.needsUpdate = true
         }
@@ -449,18 +455,24 @@ export function useMap(): UseMapReturn {
                 .easing(Easing.Quadratic.Out)
                 .onUpdate(({ mix }) => {
                   userData.gridMix.value = mix
-                  mat.emissive.setHex(mix > 0 ? 0x332200 : 0x000000)
-                  mat.emissiveIntensity = mix * 0.3
+                  // When mix reaches 0, restore original emissive
+                  if (mix > 0.01) {
+                    mat.emissive.setHex(COLORS.uzbekistan)
+                    mat.emissiveIntensity = 0.4 + mix * 0.2
+                  } else {
+                    mat.emissive.setHex(COLORS.uzbekistan)
+                    mat.emissiveIntensity = 0.4
+                  }
                 })
                 .onComplete(() => {
                   delete mesh.userData._highlightTween
                 })
                 .start()
             } else {
-              // Fallback
+              // Fallback - restore original material values
               mat.color.setHex(COLORS.uzbekistan)
-              mat.emissive.setHex(0x000000)
-              mat.emissiveIntensity = 0
+              mat.emissive.setHex(COLORS.uzbekistan)
+              mat.emissiveIntensity = 0.4
               mat.needsUpdate = true
             }
           }
