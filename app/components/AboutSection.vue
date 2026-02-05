@@ -65,7 +65,7 @@ const sectionStyle = computed(() => {
     width: 100%;
     height: 100vh;
     background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
-    z-index: 40;
+    z-index: 60;
     display: flex;
     align-items: center;
     justify-content: center;

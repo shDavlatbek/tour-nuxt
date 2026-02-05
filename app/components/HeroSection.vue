@@ -108,7 +108,7 @@ function handleBackClick() {
 
         <!-- Mouse Hint with Figure-8 Animation -->
         <div class="hero__mouse-hint"
-            :class="{ 'hero__mouse-hint--hidden': state.isZoomed || state.isLoading || hasInteracted }">
+            :class="{ 'hero__mouse-hint--hidden': state.isZoomed || state.isLoading || hasInteracted || props.frozen }">
             <div class="hero__mouse-hint-y">
                 <div class="hero__mouse-hint-x">
                     <div class="hero__mouse-hint-icon">
@@ -124,7 +124,8 @@ function handleBackClick() {
 
         <!-- Click City Hint -->
         <ClientOnly>
-            <div class="hero__click-hint" :class="{ 'hero__click-hint--visible': showClickHint && !state.isZoomed }">
+            <div class="hero__click-hint"
+                :class="{ 'hero__click-hint--visible': showClickHint && !state.isZoomed && !props.frozen }">
                 <div class="hero__click-hint-icon">
                     <svg class="hero__click-hint-marker" width="32" height="32" viewBox="0 0 48 48" fill="none">
                         <circle cx="24" cy="24" r="18" stroke="currentColor" stroke-width="2" opacity="0.5" />

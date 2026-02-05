@@ -141,8 +141,8 @@ export function useMap(): UseMapReturn {
     // Update marker scales
     updateMarkerScales(camera!, interactablePoints)
 
-    // Update label positions and proximity
-    if (cityLabels.length > 0) {
+    // Update label positions and proximity (skip when frozen)
+    if (cityLabels.length > 0 && !state.value.isFrozen) {
       updateLabelPositions(cityLabels, combinedMapGroup!)
       // Only check proximity when not zoomed (zoomed labels are handled separately)
       if (!state.value.isZoomed) {
@@ -498,10 +498,13 @@ export function useMap(): UseMapReturn {
 
   function freeze(): void {
     state.value.isFrozen = true
+    // Hide all labels when frozen
+    hideAllLabels(cityLabels, tweenGroup)
   }
 
   function unfreeze(): void {
     state.value.isFrozen = false
+    // Labels will be shown again via proximity detection in animate loop
   }
 
   return {
