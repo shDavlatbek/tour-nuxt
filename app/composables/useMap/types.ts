@@ -3,6 +3,7 @@ import type { Ref } from 'vue'
 export interface MapState {
   isZoomed: boolean
   isLoading: boolean
+  isFrozen: boolean
 }
 
 export interface UseMapReturn {
@@ -10,7 +11,10 @@ export interface UseMapReturn {
   init: (container: HTMLElement) => void
   dispose: () => void
   zoomOut: () => void
+  freeze: () => void
+  unfreeze: () => void
 }
+
 
 export interface MousePosition {
   x: number

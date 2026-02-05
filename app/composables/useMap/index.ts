@@ -23,6 +23,7 @@ export function useMap(): UseMapReturn {
   const state = ref<MapState>({
     isZoomed: false,
     isLoading: true,
+    isFrozen: false,
   })
 
   // Reactive state for animation control
@@ -132,8 +133,8 @@ export function useMap(): UseMapReturn {
       zoomedCamPos
     )
 
-    // Animate markers
-    if (interactablePoints.length > 0 && !state.value.isZoomed) {
+    // Animate markers (skip when frozen)
+    if (interactablePoints.length > 0 && !state.value.isZoomed && !state.value.isFrozen) {
       animateMarkers(interactablePoints, elapsedTime)
     }
 
@@ -149,8 +150,8 @@ export function useMap(): UseMapReturn {
       }
     }
 
-    // Drifting fog
-    if (!state.value.isZoomed) {
+    // Drifting fog (skip when frozen)
+    if (!state.value.isZoomed && !state.value.isFrozen) {
       fogParticles.forEach((sprite) => {
         sprite.position.x += sprite.userData.speed * delta * 20
         if (sprite.position.x > sprite.userData.limitX) {
@@ -495,11 +496,21 @@ export function useMap(): UseMapReturn {
     )
   }
 
+  function freeze(): void {
+    state.value.isFrozen = true
+  }
+
+  function unfreeze(): void {
+    state.value.isFrozen = false
+  }
+
   return {
     state,
     init,
     dispose,
     zoomOut,
+    freeze,
+    unfreeze,
   }
 }
 

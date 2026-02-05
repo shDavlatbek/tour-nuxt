@@ -2,7 +2,15 @@
 import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import { useMap } from '../composables/useMap'
 
-const { state, init, dispose, zoomOut } = useMap()
+interface Props {
+    frozen?: boolean
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    frozen: false,
+})
+
+const { state, init, dispose, zoomOut, freeze, unfreeze } = useMap()
 
 const mapContainer = ref<HTMLElement | null>(null)
 const showZoomVignette = ref(false)
@@ -56,6 +64,18 @@ watch(
             }, 600)
         } else {
             showZoomVignette.value = false
+        }
+    }
+)
+
+// Watch frozen prop to freeze/unfreeze map
+watch(
+    () => props.frozen,
+    (isFrozen) => {
+        if (isFrozen) {
+            freeze()
+        } else {
+            unfreeze()
         }
     }
 )

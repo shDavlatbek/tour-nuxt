@@ -126,6 +126,11 @@ export function updateParallax(
   zoomBlend: Ref<number>,
   zoomedCamPos: Ref<CameraPosition>
 ): void {
+  // Skip parallax updates when frozen
+  if (state.value.isFrozen) {
+    return
+  }
+
   // Smooth mouse interpolation
   mouseCurrent.x += (mouseTarget.x - mouseCurrent.x) * 0.05
   mouseCurrent.y += (mouseTarget.y - mouseCurrent.y) * 0.05
