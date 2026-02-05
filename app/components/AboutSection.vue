@@ -3,25 +3,52 @@ import { computed } from 'vue'
 
 interface Props {
     progress: number // 0 to 1
+    backgroundImage?: string // URL from backend
 }
 
-const props = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+    backgroundImage: '',
+})
+
+// Show background image when progress > 0.8
+const showBackgroundImage = computed(() => props.progress > 0.8 && props.backgroundImage)
 
 // Transform calculation for slide-up effect
 const sectionStyle = computed(() => {
     // Start from 100% below (translateY 100%) and move to 0%
     const translateY = 100 - props.progress * 100
-    // const opacity = props.progress
 
     return {
         transform: `translateY(${translateY}%)`,
-        // opacity,
     }
 })
+
+// Background image style with fade-in
+const backgroundStyle = computed(() => {
+    if (!props.backgroundImage) return {}
+
+    // Fade in when progress goes from 0.8 to 1
+    const fadeProgress = props.progress > 0.8
+        ? (props.progress - 0.8) / 0.2
+        : 0
+
+    return {
+        backgroundImage: `url(${props.backgroundImage})`,
+        opacity: fadeProgress,
+    }
+})
+
+// Text should be light when background image is showing
+const hasImageBackground = computed(() => showBackgroundImage.value)
 </script>
 
 <template>
-    <section class="about-section" :style="sectionStyle">
+    <section class="about-section" :style="sectionStyle" :class="{ 'about-section--dark': hasImageBackground }">
+        <!-- Background image layer -->
+        <div v-if="backgroundImage" class="about-background" :style="backgroundStyle" />
+        <!-- Overlay for readability -->
+        <div v-if="hasImageBackground" class="about-overlay" />
+
         <div class="about-content">
             <p class="about-subtitle">ABOUT</p>
             <h2 class="about-title">What is Tourism Village</h2>
@@ -73,7 +100,32 @@ const sectionStyle = computed(() => {
     pointer-events: none;
 }
 
+.about-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
+.about-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg,
+            rgba(0, 0, 0, 0.4) 0%,
+            rgba(0, 0, 0, 0.6) 100%);
+}
+
 .about-content {
+    position: relative;
+    z-index: 1;
     max-width: 900px;
     padding: 60px 40px;
     text-align: center;
@@ -86,6 +138,7 @@ const sectionStyle = computed(() => {
     color: var(--primary-color);
     margin: 0 0 48px 0;
     letter-spacing: 0.05em;
+    transition: color 0.3s ease-out;
 }
 
 .about-subtitle {
@@ -95,6 +148,7 @@ const sectionStyle = computed(() => {
     margin: 0 0 16px 0;
     letter-spacing: 0.1em;
     text-transform: uppercase;
+    transition: color 0.3s ease-out;
 }
 
 .about-description {
@@ -108,6 +162,7 @@ const sectionStyle = computed(() => {
     line-height: 1.8;
     color: #555;
     margin: 0 0 24px 0;
+    transition: color 0.3s ease-out;
 }
 
 .about-description p:last-child {
@@ -132,6 +187,7 @@ const sectionStyle = computed(() => {
     font-weight: 400;
     color: var(--primary-color);
     line-height: 1;
+    transition: color 0.3s ease-out;
 }
 
 .stat-label {
@@ -141,6 +197,28 @@ const sectionStyle = computed(() => {
     text-transform: uppercase;
     letter-spacing: 0.15em;
     margin-top: 8px;
+    transition: color 0.3s ease-out;
+}
+
+/* Dark mode text colors when background image is visible */
+.about-section--dark .about-title {
+    color: #ffffff;
+}
+
+.about-section--dark .about-subtitle {
+    color: #e8d5a3;
+}
+
+.about-section--dark .about-description p {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.about-section--dark .stat-number {
+    color: #ffffff;
+}
+
+.about-section--dark .stat-label {
+    color: rgba(255, 255, 255, 0.7);
 }
 
 @media (max-width: 768px) {

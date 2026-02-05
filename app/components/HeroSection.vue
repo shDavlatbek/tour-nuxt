@@ -54,10 +54,17 @@ function handleFirstInteraction() {
     }
 }
 
+const emit = defineEmits<{
+    (e: 'zoom-change', zoomed: boolean): void
+}>()
+
 // Watch zoom state for vignette and click hint
 watch(
     () => state.value.isZoomed,
     (isZoomed) => {
+        // Emit zoom change to parent
+        emit('zoom-change', isZoomed)
+
         if (isZoomed) {
             // Hide click hint when user zooms in (they clicked a city)
             showClickHint.value = false

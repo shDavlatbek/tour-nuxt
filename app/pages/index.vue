@@ -11,7 +11,12 @@ useSeoMeta({
 })
 
 // Scroll transition state - uses native scroll
-const { isFrozen, zoomProgress, cloudProgress, aboutProgress } = useScrollTransition()
+const { isFrozen, zoomProgress, cloudProgress, aboutProgress, setMapZoomed } = useScrollTransition()
+
+// Handle zoom state change from HeroSection
+function handleMapZoomChange(zoomed: boolean) {
+    setMapZoomed(zoomed)
+}
 </script>
 
 <template>
@@ -24,7 +29,7 @@ const { isFrozen, zoomProgress, cloudProgress, aboutProgress } = useScrollTransi
             <div class="vignette-overlay" />
 
             <!-- Hero Section -->
-            <HeroSection :frozen="isFrozen" :zoom-progress="zoomProgress" />
+            <HeroSection :frozen="isFrozen" :zoom-progress="zoomProgress" @zoom-change="handleMapZoomChange" />
 
             <!-- Cloud Overlay - appears during scroll -->
             <ClientOnly>
@@ -33,7 +38,8 @@ const { isFrozen, zoomProgress, cloudProgress, aboutProgress } = useScrollTransi
 
             <!-- About Section - slides up -->
             <ClientOnly>
-                <AboutSection :progress="aboutProgress" />
+                <AboutSection :progress="aboutProgress"
+                    background-image="https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=1920" />
             </ClientOnly>
         </div>
     </div>
