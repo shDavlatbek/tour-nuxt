@@ -11,11 +11,11 @@ const props = defineProps<Props>()
 const sectionStyle = computed(() => {
     // Start from 100% below (translateY 100%) and move to 0%
     const translateY = 100 - props.progress * 100
-    const opacity = props.progress
+    // const opacity = props.progress
 
     return {
         transform: `translateY(${translateY}%)`,
-        opacity,
+        // opacity,
     }
 })
 </script>
