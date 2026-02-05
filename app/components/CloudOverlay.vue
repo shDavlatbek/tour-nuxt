@@ -7,80 +7,51 @@ interface Props {
 
 const props = defineProps<Props>()
 
-// Generate cloud positions for all edges
-// Each cloud will move from its starting edge position toward the center
+// Reduced to 8 clouds for better performance
 const cloudConfigs = [
-    // Top row
-    { id: 1, startX: -50, startY: -60, scale: 1.8, rotation: 0 },
-    { id: 2, startX: 0, startY: -55, scale: 2.0, rotation: 15 },
-    { id: 3, startX: 50, startY: -60, scale: 1.6, rotation: -10 },
-    // Bottom row
-    { id: 4, startX: -50, startY: 60, scale: 1.9, rotation: 180 },
-    { id: 5, startX: 0, startY: 55, scale: 2.2, rotation: 170 },
-    { id: 6, startX: 50, startY: 60, scale: 1.7, rotation: 190 },
-    // Left column
-    { id: 7, startX: -60, startY: -25, scale: 1.5, rotation: 90 },
-    { id: 8, startX: -55, startY: 25, scale: 1.8, rotation: 85 },
-    // Right column
-    { id: 9, startX: 60, startY: -25, scale: 1.6, rotation: -90 },
-    { id: 10, startX: 55, startY: 25, scale: 1.9, rotation: -85 },
-    // Corner extras for full coverage
-    { id: 11, startX: -45, startY: -45, scale: 1.4, rotation: 45 },
-    { id: 12, startX: 45, startY: -45, scale: 1.5, rotation: -45 },
-    { id: 13, startX: -45, startY: 45, scale: 1.3, rotation: 135 },
-    { id: 14, startX: 45, startY: 45, scale: 1.6, rotation: -135 },
-    // Center fill clouds (appear later)
-    { id: 15, startX: -20, startY: -30, scale: 1.2, rotation: 20 },
-    { id: 16, startX: 20, startY: -30, scale: 1.3, rotation: -20 },
-    { id: 17, startX: -20, startY: 30, scale: 1.1, rotation: 160 },
-    { id: 18, startX: 20, startY: 30, scale: 1.4, rotation: -160 },
-    { id: 19, startX: 0, startY: 0, scale: 2.5, rotation: 0 },
+    // 4 edge clouds
+    { id: 1, startX: -60, startY: 0, scale: 2.5 },
+    { id: 2, startX: 60, startY: 0, scale: 2.5 },
+    { id: 3, startX: 0, startY: -60, scale: 2.5 },
+    { id: 4, startX: 0, startY: 60, scale: 2.5 },
+    // 4 corner clouds
+    { id: 5, startX: -50, startY: -50, scale: 2.0 },
+    { id: 6, startX: 50, startY: -50, scale: 2.0 },
+    { id: 7, startX: -50, startY: 50, scale: 2.0 },
+    { id: 8, startX: 50, startY: 50, scale: 2.0 },
 ]
 
+// Pre-calculate cloud styles to avoid reactive overhead
 const clouds = computed(() => {
+    const p = props.progress
+    if (p === 0) return [] // Don't render when not needed
+
     return cloudConfigs.map((config) => {
-        const progress = props.progress
-
-        // Move toward center based on progress
-        // Edge clouds move faster than center clouds
-        const distanceFromCenter = Math.sqrt(config.startX ** 2 + config.startY ** 2)
-        const moveSpeed = distanceFromCenter > 40 ? 0.7 : 0.4
-
-        const currentX = config.startX * (1 - progress * moveSpeed)
-        const currentY = config.startY * (1 - progress * moveSpeed)
-
-        // Scale up as they move in
-        const currentScale = config.scale * (1 + progress * 0.5)
-
-        // Opacity: edge clouds appear first, center clouds later
-        const startAppear = distanceFromCenter > 40 ? 0 : 0.3
-        const opacity = progress > startAppear
-            ? Math.min(1, (progress - startAppear) / 0.4)
-            : 0
+        // Simple linear movement toward center
+        const moveAmount = p * 0.6
+        const x = config.startX * (1 - moveAmount)
+        const y = config.startY * (1 - moveAmount)
+        const scale = config.scale * (1 + p * 0.3)
+        const opacity = Math.min(1, p * 1.5)
 
         return {
             id: config.id,
-            x: currentX,
-            y: currentY,
-            scale: currentScale,
-            rotation: config.rotation,
-            opacity,
+            style: {
+                transform: `translate3d(calc(-50% + ${x}vw), calc(-50% + ${y}vh), 0) scale(${scale})`,
+                opacity,
+            }
         }
     })
 })
 
-// Overall container opacity
-const containerOpacity = computed(() => {
-    return props.progress > 0 ? Math.min(1, props.progress * 2) : 0
-})
+// Show/hide entire container
+const isVisible = computed(() => props.progress > 0)
 </script>
 
 <template>
-    <div class="cloud-overlay" :style="{ opacity: containerOpacity }">
-        <img v-for="cloud in clouds" :key="cloud.id" src="/images/cloud10.png" alt="" class="cloud-sprite" :style="{
-            transform: `translate(-50%, -50%) translate(${cloud.x}vw, ${cloud.y}vh) scale(${cloud.scale}) rotate(${cloud.rotation}deg)`,
-            opacity: cloud.opacity,
-        }">
+    <div v-if="isVisible" class="cloud-overlay">
+        <img v-for="cloud in clouds" :key="cloud.id" src="/images/cloud10.png" alt="" class="cloud-sprite"
+            :style="cloud.style">
     </div>
 </template>
 
@@ -94,17 +65,18 @@ const containerOpacity = computed(() => {
     pointer-events: none;
     z-index: 50;
     overflow: hidden;
+    contain: strict;
 }
 
 .cloud-sprite {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 40vw;
-    min-width: 300px;
+    width: 50vw;
+    min-width: 400px;
     height: auto;
-    will-change: transform, opacity;
-    filter: blur(2px);
-    transition: transform 0.1s ease-out, opacity 0.1s ease-out;
+    /* GPU acceleration without expensive blur */
+    transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
 }
 </style>

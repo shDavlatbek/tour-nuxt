@@ -1,63 +1,61 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-interface ScrollTransitionState {
-  scrollProgress: number
-  isFrozen: boolean
-  cloudProgress: number
-  aboutProgress: number
-}
-
 export function useScrollTransition() {
   const scrollProgress = ref(0)
   const targetProgress = ref(0)
   
   // Scroll settings
-  const SCROLL_SPEED = 0.0015 // Sensitivity per wheel delta
-  const LERP_SPEED = 0.08 // Smooth interpolation speed
+  const SCROLL_SPEED = 0.002 // Sensitivity per wheel delta
+  const LERP_SPEED = 0.1 // Faster interpolation
   
   let animationFrame: number | null = null
+  let isAnimating = false
   
   // Computed transition phases
   const isFrozen = computed(() => scrollProgress.value > 0.05)
   
-  // Clouds: start at 0.2, fully covering at 0.8
+  // Clouds: start at 0.15, fully covering at 0.7
   const cloudProgress = computed(() => {
-    if (scrollProgress.value < 0.2) return 0
-    if (scrollProgress.value > 0.8) return 1
-    return (scrollProgress.value - 0.2) / 0.6
+    if (scrollProgress.value < 0.15) return 0
+    if (scrollProgress.value > 0.7) return 1
+    return (scrollProgress.value - 0.15) / 0.55
   })
   
-  // About: start at 0.6, fully visible at 1.0
+  // About: start at 0.5, fully visible at 1.0
   const aboutProgress = computed(() => {
-    if (scrollProgress.value < 0.6) return 0
-    return (scrollProgress.value - 0.6) / 0.4
+    if (scrollProgress.value < 0.3) return 0
+    if (scrollProgress.value > 0.9) return 1
+    return (scrollProgress.value - 0.3) / 0.6
   })
   
-  // Map zoom: 1 at 0, zoomed out at 0.3+
-  const mapZoom = computed(() => {
-    if (scrollProgress.value < 0.3) {
-      return 1 + scrollProgress.value * 0.5 // Zoom out slightly
+  function animate() {
+    const diff = targetProgress.value - scrollProgress.value
+    
+    if (Math.abs(diff) > 0.001) {
+      scrollProgress.value += diff * LERP_SPEED
+      animationFrame = requestAnimationFrame(animate)
+    } else {
+      scrollProgress.value = targetProgress.value
+      isAnimating = false
+      animationFrame = null
     }
-    return 1.15
-  })
+  }
+  
+  function startAnimation() {
+    if (!isAnimating) {
+      isAnimating = true
+      animate()
+    }
+  }
   
   function handleWheel(e: WheelEvent) {
     e.preventDefault()
     
     const delta = e.deltaY * SCROLL_SPEED
     targetProgress.value = Math.max(0, Math.min(1, targetProgress.value + delta))
-  }
-  
-  function animate() {
-    // Smooth lerp toward target
-    const diff = targetProgress.value - scrollProgress.value
-    if (Math.abs(diff) > 0.001) {
-      scrollProgress.value += diff * LERP_SPEED
-    } else {
-      scrollProgress.value = targetProgress.value
-    }
     
-    animationFrame = requestAnimationFrame(animate)
+    // Only animate when needed
+    startAnimation()
   }
   
   function reset() {
@@ -68,7 +66,6 @@ export function useScrollTransition() {
   onMounted(() => {
     if (typeof window !== 'undefined') {
       window.addEventListener('wheel', handleWheel, { passive: false })
-      animate()
     }
   })
   
@@ -86,7 +83,6 @@ export function useScrollTransition() {
     isFrozen,
     cloudProgress,
     aboutProgress,
-    mapZoom,
     reset,
   }
 }
