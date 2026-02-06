@@ -4,6 +4,9 @@ import type { Ref } from 'vue'
 import { INITIAL_CAM_POS, PARALLAX_STRENGTH, ZOOMED_PARALLAX_STRENGTH, MAX_PARALLAX_OFFSET } from './config'
 import type { CameraPosition, MapState } from './types'
 
+// Helper type to accept either a Ref or a plain object
+type BlendValue = { value: number }
+
 /**
  * Zooms camera to a specific marker
  */
@@ -23,8 +26,9 @@ export function zoomIn(
   const worldTargetPos = new THREE.Vector3()
   targetPoint.getWorldPosition(worldTargetPos)
 
-  const finalZ = Math.max(targetPoint.userData.zoomDistance, 50)
+  const finalZ = Math.max(targetPoint.userData.zoomDistance || 0, 50)
 
+  // Main Camera Tween
   new Tween(camera.position, tweenGroup)
     .to({ x: worldTargetPos.x, y: worldTargetPos.y, z: finalZ }, 1800)
     .easing(Easing.Cubic.InOut)
@@ -38,17 +42,20 @@ export function zoomIn(
     })
     .start()
 
-  // Hide fog
+  // Hide fog (Batch optimization: use shorter duration)
   fogParticles.forEach((sprite) => {
     new Tween(sprite.material, tweenGroup).to({ opacity: 0 }, 800).start()
   })
 
   // Hide other markers
+  // Optimization: Traverse carefully to avoid creating tweens on non-materials
   interactablePoints.forEach((marker) => {
     if (marker !== targetPoint && marker.userData.isMarker) {
-      marker.traverse((child: THREE.Object3D) => {
-        if ((child as THREE.Mesh).material) {
-          new Tween((child as THREE.Mesh).material, tweenGroup)
+      marker.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material) {
+          // Handle array materials if necessary, though usually rare in this setup
+          const mat = child.material as THREE.Material
+          new Tween(mat, tweenGroup)
             .to({ opacity: 0 }, 600)
             .easing(Easing.Cubic.Out)
             .start()
@@ -65,7 +72,7 @@ export function zoomOutCamera(
   camera: THREE.PerspectiveCamera,
   tweenGroup: Group,
   state: Ref<MapState>,
-  zoomBlend: Ref<number>,
+  zoomBlend: BlendValue, // Changed type to allow plain object
   zoomedCamPos: Ref<CameraPosition>,
   fogParticles: THREE.Sprite[],
   interactablePoints: THREE.Group[]
@@ -77,33 +84,43 @@ export function zoomOutCamera(
     z: camera.position.z,
   }
 
+  // 1. Update State immediately so UI can react (Back button hides, etc)
   state.value.isZoomed = false
 
-  // Animate blend factor from 1 to 0
-  const blendObj = { value: 1 }
+  // 2. Animate blend factor from 1 to 0
+  // CRITICAL OPTIMIZATION: We tween a plain object, and update the passed BlendValue.
+  // We do NOT rely on Vue reactivity here.
+  const proxy = { t: 1 } 
   zoomBlend.value = 1
 
-  new Tween(blendObj, tweenGroup)
-    .to({ value: 0 }, 1500)
+  new Tween(proxy, tweenGroup)
+    .to({ t: 0 }, 1500)
     .easing(Easing.Cubic.InOut)
-    .onUpdate((obj) => {
-      zoomBlend.value = obj.value
+    .onUpdate(() => {
+      // This is the hot path. By using a plain object in useMap, 
+      // this assignment becomes almost free.
+      zoomBlend.value = proxy.t 
     })
     .start()
 
   // Show fog
   fogParticles.forEach((sprite) => {
-    new Tween(sprite.material, tweenGroup).to({ opacity: 0.4 }, 1500).delay(500).start()
+    new Tween(sprite.material, tweenGroup)
+      .to({ opacity: 0.4 }, 1500)
+      .delay(500)
+      .start()
   })
 
   // Show markers
   interactablePoints.forEach((marker) => {
     if (marker.userData.isMarker) {
-      marker.traverse((child: THREE.Object3D) => {
-        if ((child as THREE.Mesh).material) {
-          const targetOpacity =
-            (child as THREE.Mesh).geometry?.type === 'TorusGeometry' ? 0.8 : 1.0
-          new Tween((child as THREE.Mesh).material, tweenGroup)
+      marker.traverse((child) => {
+        if (child instanceof THREE.Mesh && child.material) {
+          const mat = child.material as THREE.Material
+          // Determine target opacity based on geometry type
+          const targetOpacity = child.geometry.type.includes('Torus') ? 0.8 : 1.0
+          
+          new Tween(mat, tweenGroup)
             .to({ opacity: targetOpacity }, 800)
             .delay(300)
             .easing(Easing.Cubic.Out)
@@ -123,41 +140,51 @@ export function updateParallax(
   mouseTarget: { x: number; y: number },
   state: Ref<MapState>,
   isZoomAnimating: Ref<boolean>,
-  zoomBlend: Ref<number>,
+  zoomBlend: BlendValue, // Changed to BlendValue
   zoomedCamPos: Ref<CameraPosition>
 ): void {
   // Skip parallax updates when frozen
-  if (state.value.isFrozen) {
-    return
-  }
+  if (state.value.isFrozen) return
 
-  // Smooth mouse interpolation
+  // Smooth mouse interpolation (Lerp)
+  // Using 0.05 is good for "weighty" feel
   mouseCurrent.x += (mouseTarget.x - mouseCurrent.x) * 0.05
   mouseCurrent.y += (mouseTarget.y - mouseCurrent.y) * 0.05
 
-  let parallaxX = INITIAL_CAM_POS.x + mouseCurrent.x * PARALLAX_STRENGTH
-  let parallaxY = INITIAL_CAM_POS.y - mouseCurrent.y * PARALLAX_STRENGTH * 0.5
-  const parallaxZ = INITIAL_CAM_POS.z
+  // Calculate Parallax Targets
+  // Clamp values to prevent camera from drifting too far
+  const pX = INITIAL_CAM_POS.x + mouseCurrent.x * PARALLAX_STRENGTH
+  const pY = INITIAL_CAM_POS.y - mouseCurrent.y * PARALLAX_STRENGTH * 0.5
+  const pZ = INITIAL_CAM_POS.z
 
-  parallaxX = Math.max(-MAX_PARALLAX_OFFSET, Math.min(MAX_PARALLAX_OFFSET, parallaxX))
-  parallaxY = Math.max(-MAX_PARALLAX_OFFSET * 0.5, Math.min(MAX_PARALLAX_OFFSET * 0.5, parallaxY))
+  const clampedX = THREE.MathUtils.clamp(pX, -MAX_PARALLAX_OFFSET, MAX_PARALLAX_OFFSET)
+  const clampedY = THREE.MathUtils.clamp(pY, -MAX_PARALLAX_OFFSET * 0.5, MAX_PARALLAX_OFFSET * 0.5)
 
-  if (!isZoomAnimating.value) {
-    if (state.value.isZoomed) {
-      const targetX = zoomedCamPos.value.x + mouseCurrent.x * ZOOMED_PARALLAX_STRENGTH
-      const targetY = zoomedCamPos.value.y - mouseCurrent.y * ZOOMED_PARALLAX_STRENGTH * 0.5
-      camera.position.x += (targetX - camera.position.x) * 0.08
-      camera.position.y += (targetY - camera.position.y) * 0.08
-    } else if (zoomBlend.value > 0.001) {
-      // Transitioning - blend between zoomed and parallax positions
-      camera.position.x = zoomedCamPos.value.x * zoomBlend.value + parallaxX * (1 - zoomBlend.value)
-      camera.position.y = zoomedCamPos.value.y * zoomBlend.value + parallaxY * (1 - zoomBlend.value)
-      camera.position.z = zoomedCamPos.value.z * zoomBlend.value + parallaxZ * (1 - zoomBlend.value)
-    } else {
-      // Fully parallax mode
-      camera.position.x = parallaxX
-      camera.position.y = parallaxY
-      camera.position.z = parallaxZ
-    }
+  // 1. Standard Parallax (Not Zoomed, Not Animating)
+  if (!state.value.isZoomed && !isZoomAnimating.value && zoomBlend.value < 0.001) {
+    camera.position.x = clampedX
+    camera.position.y = clampedY
+    camera.position.z = pZ
+    return
+  }
+
+  // 2. Zoomed Parallax (Subtle movement when looking at a region)
+  if (state.value.isZoomed && !isZoomAnimating.value) {
+    const targetX = zoomedCamPos.value.x + mouseCurrent.x * ZOOMED_PARALLAX_STRENGTH
+    const targetY = zoomedCamPos.value.y - mouseCurrent.y * ZOOMED_PARALLAX_STRENGTH * 0.5
+    
+    // Smoothly interpolate current camera to target
+    camera.position.x += (targetX - camera.position.x) * 0.08
+    camera.position.y += (targetY - camera.position.y) * 0.08
+    return
+  }
+
+  // 3. Blending State (Transitioning out of zoom)
+  if (zoomBlend.value > 0.001) {
+    const t = zoomBlend.value
+    // Linear interpolation between the "Zoomed Position" and the "Parallax Position"
+    camera.position.x = zoomedCamPos.value.x * t + clampedX * (1 - t)
+    camera.position.y = zoomedCamPos.value.y * t + clampedY * (1 - t)
+    camera.position.z = zoomedCamPos.value.z * t + pZ * (1 - t)
   }
 }

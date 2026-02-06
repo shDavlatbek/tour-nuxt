@@ -36,7 +36,9 @@ export function useMap(): UseMapReturn {
 
   // Reactive state
   const isZoomAnimating = ref(false)
-  const zoomBlend = ref(0)
+  // Performance: Use a plain object instead of ref() to avoid 
+  // triggering Vue reactivity 60 times/sec during animation.
+  const zoomBlend = { value: 0 }
   const zoomedCamPos = ref<CameraPosition>({ x: 0, y: 0, z: 1200 })
   const isEntranceAnimating = ref(false)
 
