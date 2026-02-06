@@ -3,6 +3,7 @@ import { computed } from 'vue'
 
 interface Props {
   progress: number // 0 to 1
+  aboutProgress: number // 0 to 1
 }
 
 const props = defineProps<Props>()
@@ -20,7 +21,7 @@ const CLOUD_CONFIGS = [
 ]
 
 // 2. Only check visibility to prevent rendering when not needed
-const isVisible = computed(() => props.progress > 0)
+const isVisible = computed(() => props.progress > -1 && props.aboutProgress < 1)
 
 // 3. Pass progress purely as a CSS variable to the container
 const containerStyle = computed(() => ({

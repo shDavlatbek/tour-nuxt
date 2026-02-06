@@ -34,7 +34,7 @@ function handleMapZoomChange(zoomed: boolean) {
 
             <!-- Cloud Overlay - appears during scroll -->
             <ClientOnly>
-                <CloudOverlay :progress="cloudProgress" />
+                <CloudOverlay :progress="cloudProgress" :about-progress="aboutProgress" />
             </ClientOnly>
 
             <!-- About Section - slides up -->
