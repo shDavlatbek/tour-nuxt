@@ -22,7 +22,7 @@ export default defineNuxtConfig({
         'localhost',
         '127.0.0.1',
         '0.0.0.0',
-        'c99d-84-54-84-26.ngrok-free.app'
+        'tourism-villages.vercel.app',
       ]
     }
   }
