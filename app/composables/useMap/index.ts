@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { Group, Tween, Easing } from '@tweenjs/tween.js'
-import { ref, shallowRef } from 'vue' // shallowRef is better for non-nested objects
+import { ref } from 'vue' // Changed back to ref for deep reactivity
+
 
 // Types
 import type { MapState, UseMapReturn, CameraPosition } from './types'
@@ -25,8 +26,8 @@ import {
 } from './labels'
 
 export function useMap(): UseMapReturn {
-  // Use shallowRef for simple state objects to avoid deep proxy overhead
-  const state = shallowRef<MapState>({
+  // CRITICAL FIX: Use 'ref' so Vue detects changes to .isZoomed
+  const state = ref<MapState>({
     isZoomed: false,
     isLoading: true,
     isFrozen: false,
@@ -243,7 +244,7 @@ export function useMap(): UseMapReturn {
       if (!isZoomed) {
         // Optimized for-loop for arrays is faster than forEach
         for (let i = 0, l = fogParticles.length; i < l; i++) {
-          const sprite = fogParticles[i]
+          const sprite = fogParticles[i]!
           sprite.position.x += sprite.userData.speed * delta * 20
           if (sprite.position.x > sprite.userData.limitX) {
             sprite.position.x = -sprite.userData.limitX
@@ -337,7 +338,7 @@ export function useMap(): UseMapReturn {
       
       if (markerIntersects.length > 0) {
         // Traverse up to find the group with user data
-        let target: THREE.Object3D | null = markerIntersects[0].object
+        let target: THREE.Object3D | null = markerIntersects[0]!.object
         while (target && !target.userData.isMarker) {
           target = target.parent
         }
@@ -360,7 +361,7 @@ export function useMap(): UseMapReturn {
 
       const labelIntersects = raycaster.intersectObjects(labelObjects, false)
       if (labelIntersects.length > 0) {
-        let labelGroup = labelIntersects[0].object.parent
+        const labelGroup = labelIntersects[0]!.object.parent
         if (labelGroup && labelGroup.name.startsWith('label-')) {
           const regionId = labelGroup.name.replace('label-', '')
           const marker = interactablePoints.find(m => m.userData.regionId === regionId)
@@ -405,14 +406,13 @@ export function useMap(): UseMapReturn {
     disposeLabels(cityLabels)
 
     // Helper for thorough cleaning
-    const cleanMaterial = (material: THREE.Material) => {
-      material.dispose()
-      // Dispose textures if present
-      for (const key of Object.keys(material)) {
-        const value = (material as any)[key]
-        if (value && typeof value === 'object' && 'minFilter' in value) {
-          value.dispose()
-        }
+    const cleanMaterial = (mat: any) => {
+      mat.dispose()
+      if (mat.map) mat.map.dispose()
+      if (mat.uniforms) {
+         Object.values(mat.uniforms).forEach((u: any) => {
+             if (u.value?.dispose) u.value.dispose()
+         })
       }
     }
 
