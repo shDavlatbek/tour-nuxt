@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { Group, Tween, Easing } from '@tweenjs/tween.js'
-import { ref } from 'vue'
+import { ref, shallowRef } from 'vue' // shallowRef is better for non-nested objects
 
 // Types
 import type { MapState, UseMapReturn, CameraPosition } from './types'
@@ -14,26 +14,35 @@ import { createGrid, animateGrid } from './grid'
 import { updateMarkerScales, animateMarkers } from './markers'
 import { zoomIn, zoomOutCamera, updateParallax } from './camera'
 import { loadMap } from './loader'
-import { createCityLabel, updateLabelsProximity, updateLabelPositions, disposeLabels, updateLabelsForZoom, hideAllLabels, type CityLabel } from './labels'
-
-// Create a dedicated tween group for this composable
-const tweenGroup = new Group()
+import { 
+  createCityLabel, 
+  updateLabelsProximity, 
+  updateLabelPositions, 
+  disposeLabels, 
+  updateLabelsForZoom, 
+  hideAllLabels, 
+  type CityLabel 
+} from './labels'
 
 export function useMap(): UseMapReturn {
-  const state = ref<MapState>({
+  // Use shallowRef for simple state objects to avoid deep proxy overhead
+  const state = shallowRef<MapState>({
     isZoomed: false,
     isLoading: true,
     isFrozen: false,
     isPaused: false,
   })
 
-  // Reactive state for animation control
+  // Reactive state
   const isZoomAnimating = ref(false)
   const zoomBlend = ref(0)
   const zoomedCamPos = ref<CameraPosition>({ x: 0, y: 0, z: 1200 })
   const isEntranceAnimating = ref(false)
 
-  // Three.js objects (not reactive for performance)
+  // Animation Engine (Instance scoped)
+  const tweenGroup = new Group()
+
+  // Three.js objects (Non-reactive for performance)
   let scene: THREE.Scene | null = null
   let camera: THREE.PerspectiveCamera | null = null
   let renderer: THREE.WebGLRenderer | null = null
@@ -45,32 +54,35 @@ export function useMap(): UseMapReturn {
   let gridGroup: THREE.Group | null = null
   let labelsGroup: THREE.Group | null = null
 
-  // Arrays
+  // Data Structures
   const interactablePoints: THREE.Group[] = []
   const fogParticles: THREE.Sprite[] = []
   const gridLines: THREE.Line[] = []
   const cityLabels: CityLabel[] = []
 
-  // Selection tracking
   let selectedRegionId: string | null = null
 
-  // Mouse tracking
+  // Interaction State
   const mouseTarget = { x: 0, y: 0 }
   const mouseCurrent = { x: 0, y: 0 }
   const mouseScreenPos = { x: 0, y: 0 }
-
-  // Utils
+  
+  // Reusable instances to avoid Garbage Collection
   const clock = new THREE.Clock()
   const raycaster = new THREE.Raycaster()
   const mouse = new THREE.Vector2()
 
-  // Event handlers
+  // Event Handlers
   let handleMouseMove: ((e: MouseEvent) => void) | null = null
   let handleClick: ((e: MouseEvent) => void) | null = null
   let handleResize: (() => void) | null = null
   let containerEl: HTMLElement | null = null
 
+  // --- Helpers ---
+
   function createFogParticle(x: number, y: number, z: number, scale: number): void {
+    if (!fogGroup) return
+    
     const material = new THREE.SpriteMaterial({
       map: createFogTexture(),
       transparent: true,
@@ -88,13 +100,10 @@ export function useMap(): UseMapReturn {
       limitX: 1000,
     }
 
-    fogGroup?.add(sprite)
+    fogGroup.add(sprite)
     fogParticles.push(sprite)
   }
 
-  /**
-   * Creates city labels for all markers after map loads
-   */
   function createLabelsForMarkers(): void {
     if (!labelsGroup) return
 
@@ -111,24 +120,100 @@ export function useMap(): UseMapReturn {
     })
   }
 
+  /**
+   * Extracted highlight logic to improve readability
+   */
+  function highlightRegionMeshes(marker: THREE.Group, highlight: boolean) {
+    const meshes = marker.userData.regionMeshes as THREE.Mesh[] | undefined
+    if (!meshes) return
+
+    const targetMix = highlight ? 1.0 : 0.0
+
+    meshes.forEach((mesh) => {
+      if (!(mesh.material instanceof THREE.MeshStandardMaterial)) return
+      
+      const mat = mesh.material
+      const userData = mat.userData
+
+      // 1. Shader-based Grid Mix Animation
+      if (userData?.gridMix) {
+        // Stop existing tween
+        if (mesh.userData._highlightTween) {
+          mesh.userData._highlightTween.stop()
+        }
+
+        const currentMix = userData.gridMix.value
+        
+        mesh.userData._highlightTween = new Tween({ mix: currentMix }, tweenGroup)
+          .to({ mix: targetMix }, highlight ? 500 : 400) // Slightly faster fade out
+          .easing(Easing.Quadratic.Out)
+          .onUpdate(({ mix }) => {
+            userData.gridMix.value = mix
+            
+            // Adjust emissive based on mix
+            const intensityBase = 0.8
+            mat.emissive.setHex(COLORS.uzbekistan)
+            mat.emissiveIntensity = intensityBase + (mix * 0.2)
+          })
+          .onComplete(() => {
+            delete mesh.userData._highlightTween
+          })
+          .start()
+      } 
+      // 2. Fallback Standard Material Animation
+      else {
+        if (highlight) {
+            mat.color.setHex(COLORS.uzbekistanHighlight)
+            mat.emissive.setHex(COLORS.uzbekistanHighlight)
+            mat.emissiveIntensity = 0.3
+        } else {
+            mat.color.setHex(COLORS.uzbekistan)
+            mat.emissive.setHex(COLORS.uzbekistan)
+            mat.emissiveIntensity = 0.8
+        }
+        mat.needsUpdate = true
+      }
+    })
+  }
+
+  function triggerZoomToRegion(regionId: string, marker: THREE.Group) {
+    if (!camera) return
+    selectedRegionId = regionId
+    updateLabelsForZoom(cityLabels, selectedRegionId, true, tweenGroup, 1.8)
+    
+    highlightRegionMeshes(marker, true)
+    
+    zoomIn(
+      camera,
+      marker,
+      tweenGroup,
+      state,
+      isZoomAnimating,
+      zoomedCamPos,
+      fogParticles,
+      interactablePoints
+    )
+  }
+
+  // --- Animation Loop ---
+
   function animate(): void {
     animationFrameId = requestAnimationFrame(animate)
 
-    // Skip rendering when paused
-    if (state.value.isPaused) return
+    if (state.value.isPaused || !scene || !camera || !renderer) return
 
     const delta = clock.getDelta()
     const elapsedTime = clock.getElapsedTime()
+    const isFrozen = state.value.isFrozen
+    const isZoomed = state.value.isZoomed
 
-    // Update tweens
     tweenGroup.update()
 
-    // Animate grid
     animateGrid(gridLines, elapsedTime)
 
-    // Update parallax
+    // Camera Parallax
     updateParallax(
-      camera!,
+      camera,
       mouseCurrent,
       mouseTarget,
       state,
@@ -137,77 +222,87 @@ export function useMap(): UseMapReturn {
       zoomedCamPos
     )
 
-    // Animate markers (skip when frozen)
-    if (interactablePoints.length > 0 && !state.value.isZoomed && !state.value.isFrozen) {
-      animateMarkers(interactablePoints, elapsedTime)
-    }
+    // Marker & Label Animation (Skip if frozen or zoomed)
+    if (!isFrozen) {
+      if (!isZoomed && interactablePoints.length > 0) {
+        animateMarkers(interactablePoints, elapsedTime)
+      }
 
-    // Update marker scales
-    updateMarkerScales(camera!, interactablePoints)
+      updateMarkerScales(camera, interactablePoints)
 
-    // Update label positions and proximity (skip when frozen)
-    if (cityLabels.length > 0 && !state.value.isFrozen) {
-      updateLabelPositions(cityLabels, combinedMapGroup!)
-      // Only check proximity when not zoomed (zoomed labels are handled separately)
-      if (!state.value.isZoomed) {
-        updateLabelsProximity(cityLabels, camera!, mouseScreenPos, LABEL_CONFIG.revealRadius, tweenGroup)
+      if (cityLabels.length > 0) {
+        updateLabelPositions(cityLabels, combinedMapGroup!)
+        
+        // Perf: Only check proximity when not zoomed to save calculations
+        if (!isZoomed) {
+          updateLabelsProximity(cityLabels, camera, mouseScreenPos, LABEL_CONFIG.revealRadius, tweenGroup)
+        }
+      }
+
+      // Fog Animation
+      if (!isZoomed) {
+        // Optimized for-loop for arrays is faster than forEach
+        for (let i = 0, l = fogParticles.length; i < l; i++) {
+          const sprite = fogParticles[i]
+          sprite.position.x += sprite.userData.speed * delta * 20
+          if (sprite.position.x > sprite.userData.limitX) {
+            sprite.position.x = -sprite.userData.limitX
+          }
+        }
       }
     }
 
-    // Drifting fog (skip when frozen)
-    if (!state.value.isZoomed && !state.value.isFrozen) {
-      fogParticles.forEach((sprite) => {
-        sprite.position.x += sprite.userData.speed * delta * 20
-        if (sprite.position.x > sprite.userData.limitX) {
-          sprite.position.x = -sprite.userData.limitX
-        }
-      })
-    }
-
-    renderer?.render(scene!, camera!)
+    renderer.render(scene, camera)
   }
+
+  // --- Lifecycle ---
 
   function init(container: HTMLElement): void {
     containerEl = container
 
-    // Scene setup
+    // Scene
     scene = new THREE.Scene()
-    scene.background = null
+    // Do not set background if transparent is intended, otherwise set it here to save blending costs
     scene.fog = new THREE.Fog(0xeef2f3, 800, 3500)
 
     // Camera
-    camera = new THREE.PerspectiveCamera(
-      45,
-      window.innerWidth / window.innerHeight,
-      1,
-      10000
-    )
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000)
     camera.position.set(INITIAL_CAM_POS.x, INITIAL_CAM_POS.y, INITIAL_CAM_POS.z)
 
-    // Renderer
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true })
+    // Renderer Optimization
+    const pixelRatio = Math.min(window.devicePixelRatio, 2) // Cap at 2x for performance
+    // AA is expensive. Only enable if pixel ratio is 1 (standard monitors).
+    // High DPI screens don't need AA as much.
+    const antialias = pixelRatio === 1 
+
+    renderer = new THREE.WebGLRenderer({ antialias, alpha: true, powerPreference: "high-performance" })
     renderer.setSize(window.innerWidth, window.innerHeight)
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1))
+    renderer.setPixelRatio(pixelRatio)
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
     container.appendChild(renderer.domElement)
 
-    // Lighting
+    // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 1)
     scene.add(ambientLight)
 
     const dirLight = new THREE.DirectionalLight(0xffffff, 2)
     dirLight.position.set(200, 500, 400)
     dirLight.castShadow = true
-    dirLight.shadow.mapSize.width = 2048
-    dirLight.shadow.mapSize.height = 2048
+    // Optimized shadow map size (2048 is often overkill for stylized maps, 1024 is usually sufficient)
+    dirLight.shadow.mapSize.width = 1024 
+    dirLight.shadow.mapSize.height = 1024
     scene.add(dirLight)
 
-    // Fog group
+    // Groups
     fogGroup = new THREE.Group()
-    scene.add(fogGroup)
+    gridGroup = new THREE.Group()
+    combinedMapGroup = new THREE.Group()
+    labelsGroup = new THREE.Group()
 
-    // Create fog particles
+    scene.add(fogGroup, gridGroup, combinedMapGroup, labelsGroup)
+
+    // Init Fog
     for (let i = 0; i < 25; i++) {
       const x = (Math.random() - 0.5) * 1600
       const y = (Math.random() - 0.5) * 800
@@ -216,21 +311,11 @@ export function useMap(): UseMapReturn {
       createFogParticle(x, y, z, fogScale)
     }
 
-    // Grid group
-    gridGroup = new THREE.Group()
-    scene.add(gridGroup)
     createGrid(gridGroup, gridLines)
 
-    // Map group
-    combinedMapGroup = new THREE.Group()
-    scene.add(combinedMapGroup)
-
-    // Labels group
-    labelsGroup = new THREE.Group()
-    scene.add(labelsGroup)
-
-    // Event handlers
+    // Interaction Setup
     handleMouseMove = (e: MouseEvent) => {
+      // Calculate normalized device coordinates (-1 to +1)
       mouseTarget.x = (e.clientX / window.innerWidth - 0.5) * 2
       mouseTarget.y = (e.clientY / window.innerHeight - 0.5) * 2
       mouseScreenPos.x = e.clientX
@@ -238,22 +323,21 @@ export function useMap(): UseMapReturn {
     }
 
     handleClick = (e: MouseEvent) => {
-      // Skip click handling when paused or zoomed
-      if (state.value.isPaused || state.value.isZoomed) return
+      if (state.value.isPaused || state.value.isZoomed || !camera || !labelsGroup) return
 
-      mouse.x = (e.clientX / window.innerWidth) * 2 - 1
-      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1
+      // Use the bounds of the renderer, not window, in case it's embedded
+      const rect = renderer!.domElement.getBoundingClientRect()
+      mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
+      mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
 
-      raycaster.setFromCamera(mouse, camera!)
-      
-      // Check markers first
+      raycaster.setFromCamera(mouse, camera)
+
+      // 1. Check Markers (Priority)
       const markerIntersects = raycaster.intersectObjects(interactablePoints, true)
       
       if (markerIntersects.length > 0) {
-        const firstIntersect = markerIntersects[0]
-        if (!firstIntersect) return
-
-        let target: THREE.Object3D | null = firstIntersect.object
+        // Traverse up to find the group with user data
+        let target: THREE.Object3D | null = markerIntersects[0].object
         while (target && !target.userData.isMarker) {
           target = target.parent
         }
@@ -262,124 +346,42 @@ export function useMap(): UseMapReturn {
           return
         }
       }
-      
-      // Check labels (sprites and lines)
-      if (labelsGroup) {
-        const labelObjects: THREE.Object3D[] = []
-        labelsGroup.traverse((child) => {
-          if (child instanceof THREE.Sprite || child instanceof THREE.Line) {
-            labelObjects.push(child)
-          }
-        })
-        
-        const labelIntersects = raycaster.intersectObjects(labelObjects, false)
-        if (labelIntersects.length > 0 && labelIntersects[0]) {
-          // Find which label was clicked
-          let labelGroup: THREE.Object3D | null = labelIntersects[0].object.parent
-          while (labelGroup && !labelGroup.name.startsWith('label-')) {
-            labelGroup = labelGroup.parent
-          }
-          
-          if (labelGroup && labelGroup.name.startsWith('label-')) {
-            const regionId = labelGroup.name.replace('label-', '')
-            // Find corresponding marker
-            const marker = interactablePoints.find(m => m.userData.regionId === regionId)
-            if (marker) {
-              triggerZoomToRegion(regionId, marker)
-            }
-          }
+
+      // 2. Check Labels
+      // Optimization: Instead of traversing, maintain a flattened array of hit targets if possible.
+      // Current approach:
+      const labelObjects: THREE.Object3D[] = []
+      labelsGroup.children.forEach(group => {
+          // Add sprite and line children to check
+          group.children.forEach(child => {
+              if (child.type === 'Sprite' || child.type === 'Line') labelObjects.push(child)
+          })
+      })
+
+      const labelIntersects = raycaster.intersectObjects(labelObjects, false)
+      if (labelIntersects.length > 0) {
+        let labelGroup = labelIntersects[0].object.parent
+        if (labelGroup && labelGroup.name.startsWith('label-')) {
+          const regionId = labelGroup.name.replace('label-', '')
+          const marker = interactablePoints.find(m => m.userData.regionId === regionId)
+          if (marker) triggerZoomToRegion(regionId, marker)
         }
       }
     }
-    
-    // Helper function to trigger zoom to a region
-    function triggerZoomToRegion(regionId: string, marker: THREE.Group) {
-      selectedRegionId = regionId
-      updateLabelsForZoom(cityLabels, selectedRegionId, true, tweenGroup, 1.8)
-      
-      // Highlight selected region meshes
-      highlightRegionMeshes(marker, true)
-      
-      zoomIn(
-        camera!,
-        marker,
-        tweenGroup,
-        state,
-        isZoomAnimating,
-        zoomedCamPos,
-        fogParticles,
-        interactablePoints
-      )
-    }
-    
-    // Highlight or reset region mesh colors with smooth grid overlay animation
-    function highlightRegionMeshes(marker: THREE.Group, highlight: boolean) {
-      const meshes = marker.userData.regionMeshes as THREE.Mesh[] | undefined
-      if (!meshes) return
-
-      const targetMix = highlight ? 1.0 : 0.0
-
-      meshes.forEach((mesh) => {
-        if (!(mesh.material instanceof THREE.MeshStandardMaterial)) return
-
-        const mat = mesh.material
-        const userData = mat.userData
-
-        // Check if material has grid shader uniforms
-        if (userData?.gridMix) {
-          // Cancel any existing tween for this mesh
-          if (mesh.userData._highlightTween) {
-            mesh.userData._highlightTween.stop()
-          }
-
-          // Animate the gridMix uniform (like CodePen example)
-          const currentMix = userData.gridMix.value
-          mesh.userData._highlightTween = new Tween({ mix: currentMix }, tweenGroup)
-            .to({ mix: targetMix }, 500)
-            .easing(Easing.Quadratic.Out)
-            .onUpdate(({ mix }) => {
-              userData.gridMix.value = mix
-              // Animate emissive - when highlight off, restore to original (COLORS.uzbekistan with 0.4 intensity)
-              if (mix > 0) {
-                mat.emissive.setHex(COLORS.uzbekistan)
-                mat.emissiveIntensity = 0.6 + mix * 0.2
-              } else {
-                mat.emissive.setHex(COLORS.uzbekistan)
-                mat.emissiveIntensity = 0.6
-              }
-            })
-            .onComplete(() => {
-              delete mesh.userData._highlightTween
-            })
-            .start()
-        } else {
-          // Fallback for materials without shader modification
-          if (highlight) {
-            mat.color.setHex(COLORS.uzbekistanHighlight)
-            mat.emissive.setHex(COLORS.uzbekistanHighlight)
-            mat.emissiveIntensity = 0.3
-          } else {
-            // Reset to original material values from loader.ts
-            mat.color.setHex(COLORS.uzbekistan)
-            mat.emissive.setHex(COLORS.uzbekistan)
-            mat.emissiveIntensity = 0.6
-          }
-          mat.needsUpdate = true
-        }
-      })
-    }
 
     handleResize = () => {
-      camera!.aspect = window.innerWidth / window.innerHeight
-      camera!.updateProjectionMatrix()
-      renderer!.setSize(window.innerWidth, window.innerHeight)
+      if (!camera || !renderer) return
+      camera.aspect = window.innerWidth / window.innerHeight
+      camera.updateProjectionMatrix()
+      renderer.setSize(window.innerWidth, window.innerHeight)
     }
 
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('click', handleClick)
+    // Attach to DOM element where possible to avoid global pollution
+    renderer.domElement.addEventListener('mousemove', handleMouseMove)
+    renderer.domElement.addEventListener('click', handleClick)
     window.addEventListener('resize', handleResize)
 
-    // Load map and start animation
+    // Load Assets
     loadMap(combinedMapGroup, interactablePoints, state, fogParticles, tweenGroup, isEntranceAnimating)
       .then(() => {
         createLabelsForMarkers()
@@ -389,33 +391,48 @@ export function useMap(): UseMapReturn {
   }
 
   function dispose(): void {
-    if (animationFrameId !== null) {
-      cancelAnimationFrame(animationFrameId)
-    }
+    if (animationFrameId !== null) cancelAnimationFrame(animationFrameId)
 
-    if (handleMouseMove) window.removeEventListener('mousemove', handleMouseMove)
-    if (handleClick) window.removeEventListener('click', handleClick)
+    // Cleanup Listeners
+    if (renderer?.domElement && handleMouseMove) renderer.domElement.removeEventListener('mousemove', handleMouseMove)
+    if (renderer?.domElement && handleClick) renderer.domElement.removeEventListener('click', handleClick)
     if (handleResize) window.removeEventListener('resize', handleResize)
 
-    // Dispose labels
+    // Stop all tweens
+    tweenGroup.removeAll()
+
+    // Dispose Labels
     disposeLabels(cityLabels)
 
+    // Helper for thorough cleaning
+    const cleanMaterial = (material: THREE.Material) => {
+      material.dispose()
+      // Dispose textures if present
+      for (const key of Object.keys(material)) {
+        const value = (material as any)[key]
+        if (value && typeof value === 'object' && 'minFilter' in value) {
+          value.dispose()
+        }
+      }
+    }
+
+    // Recursive scene disposal
     scene?.traverse((object: THREE.Object3D) => {
       if (object instanceof THREE.Mesh) {
-        object.geometry?.dispose()
+        object.geometry.dispose()
         if (Array.isArray(object.material)) {
-          object.material.forEach((m: THREE.Material) => m.dispose())
+          object.material.forEach(cleanMaterial)
         } else {
-          object.material?.dispose()
+          cleanMaterial(object.material)
         }
       }
       if (object instanceof THREE.Line) {
-        object.geometry?.dispose()
-        ;(object.material as THREE.Material)?.dispose()
+        object.geometry.dispose()
+        if (object.material instanceof THREE.Material) cleanMaterial(object.material)
       }
       if (object instanceof THREE.Sprite) {
-        ;(object.material as THREE.SpriteMaterial)?.map?.dispose()
-        object.material?.dispose()
+        object.geometry.dispose() // Sprites have geometry too
+        cleanMaterial(object.material)
       }
     })
 
@@ -424,10 +441,13 @@ export function useMap(): UseMapReturn {
       containerEl.removeChild(renderer.domElement)
     }
 
+    // Clear Arrays
     interactablePoints.length = 0
     fogParticles.length = 0
     gridLines.length = 0
+    cityLabels.length = 0
 
+    // Nullify
     scene = null
     camera = null
     renderer = null
@@ -439,59 +459,18 @@ export function useMap(): UseMapReturn {
   }
 
   function zoomOut(): void {
-    // Reset all region mesh colors with animation
-    interactablePoints.forEach((marker) => {
-      const meshes = marker.userData.regionMeshes as THREE.Mesh[] | undefined
-      if (meshes) {
-        meshes.forEach((mesh) => {
-          if (mesh.material instanceof THREE.MeshStandardMaterial) {
-            const mat = mesh.material
-            const userData = mat.userData
+    if (!camera) return
 
-            // Animate gridMix back to 0 if available
-            if (userData?.gridMix) {
-              // Cancel any existing tween
-              if (mesh.userData._highlightTween) {
-                mesh.userData._highlightTween.stop()
-              }
+    // 1. Reset Highlights
+    interactablePoints.forEach((marker) => highlightRegionMeshes(marker, false))
 
-              const currentMix = userData.gridMix.value
-              mesh.userData._highlightTween = new Tween({ mix: currentMix }, tweenGroup)
-                .to({ mix: 0 }, 400)
-                .easing(Easing.Quadratic.Out)
-                .onUpdate(({ mix }) => {
-                  userData.gridMix.value = mix
-                  // When mix reaches 0, restore original emissive
-                  if (mix > 0.01) {
-                    mat.emissive.setHex(COLORS.uzbekistan)
-                    mat.emissiveIntensity = 0.6 + mix * 0.2
-                  } else {
-                    mat.emissive.setHex(COLORS.uzbekistan)
-                    mat.emissiveIntensity = 0.6
-                  }
-                })
-                .onComplete(() => {
-                  delete mesh.userData._highlightTween
-                })
-                .start()
-            } else {
-              // Fallback - restore original material values
-              mat.color.setHex(COLORS.uzbekistan)
-              mat.emissive.setHex(COLORS.uzbekistan)
-              mat.emissiveIntensity = 0.6
-              mat.needsUpdate = true
-            }
-          }
-        })
-      }
-    })
-    
-    // Reset labels when zooming out
+    // 2. Reset Labels
     selectedRegionId = null
     updateLabelsForZoom(cityLabels, null, false, tweenGroup)
-    
+
+    // 3. Move Camera
     zoomOutCamera(
-      camera!,
+      camera,
       tweenGroup,
       state,
       zoomBlend,
@@ -503,42 +482,28 @@ export function useMap(): UseMapReturn {
 
   function freeze(): void {
     state.value.isFrozen = true
-    // Hide all labels when frozen
     hideAllLabels(cityLabels, tweenGroup)
   }
 
   function unfreeze(): void {
     state.value.isFrozen = false
-    // Labels will be shown again via proximity detection in animate loop
   }
 
-  /**
-   * Set camera zoom based on scroll progress (0-1)
-   * 0 = normal view (INITIAL_CAM_POS.z = 1200)
-   * 1 = zoomed out (z = 2500)
-   */
   function setScrollZoom(progress: number): void {
     if (!camera) return
-    
-    const startZ = INITIAL_CAM_POS.z // 1200
-    const endZ = 2500 // Zoomed out
-    const targetZ = startZ + (endZ - startZ) * progress
-    
-    camera.position.z = targetZ
+    const startZ = INITIAL_CAM_POS.z
+    const endZ = 2500
+    camera.position.z = startZ + (endZ - startZ) * progress
   }
 
-  /**
-   * Pause rendering and event handling (for performance when hidden)
-   */
   function pause(): void {
     state.value.isPaused = true
   }
 
-  /**
-   * Resume rendering and event handling
-   */
   function resume(): void {
     state.value.isPaused = false
+    // Restart loop if it stopped
+    if (animationFrameId === null) animate()
   }
 
   return {
@@ -554,5 +519,4 @@ export function useMap(): UseMapReturn {
   }
 }
 
-// Re-export types for convenience
 export type { MapState, UseMapReturn } from './types'

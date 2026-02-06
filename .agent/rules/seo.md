@@ -1,6 +1,6 @@
 ---
-trigger: always_on
+trigger: manual
 ---
 
 Using Nuxt 4
-Add seo tags and make sure there is seo optimization setup 
+Add seo tags and make sure there is seo optimization setup

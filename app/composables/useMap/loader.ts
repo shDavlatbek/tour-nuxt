@@ -81,11 +81,11 @@ export async function loadMap(
             const material = new THREE.MeshStandardMaterial({
               color: COLORS.uzbekistan,
               transparent: true,
-              opacity: 0.85,
-              roughness: 0.1,
-              metalness: 0.1,
+              opacity: 0.8,
+              roughness: 0.5,
+              metalness: 0.2,
               emissive: COLORS.uzbekistan, 
-              emissiveIntensity: 0.6
+              emissiveIntensity: 0.8
             })
 
             // Store uniforms for grid blend animation (like CodePen example)
