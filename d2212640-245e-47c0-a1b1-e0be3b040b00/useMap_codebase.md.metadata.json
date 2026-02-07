@@ -1,6 +1,0 @@
-{
-  "artifactType": "ARTIFACT_TYPE_OTHER",
-  "summary": "Complete codebase documentation for the Uzbekistan Tourism project. Covers the entire application architecture including: useMap composable (3D map system with 9 modules), useScrollTransition composable, index page, and 3 components (HeroSection, AboutSection, CloudOverlay). Includes mermaid diagrams, file tables, interfaces, state flows, and animation timelines.",
-  "updatedAt": "2026-02-07T08:45:18.242639400Z",
-  "version": "1"
-}

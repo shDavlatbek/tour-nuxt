@@ -11,7 +11,7 @@ useSeoMeta({
 })
 
 // Virtual scroll transition state
-const { scrollProgress, isFrozen, zoomProgress, cloudProgress, aboutProgress, setMapZoomed } = useScrollTransition()
+const { scrollProgress, isFrozen, zoomProgress, cloudProgress, aboutProgress, cityHeadProgress, setMapZoomed } = useScrollTransition()
 
 // Handle zoom state change from HeroSection
 function handleMapZoomChange(zoomed: boolean) {
@@ -41,10 +41,16 @@ function handleMapZoomChange(zoomed: boolean) {
                 background-image="https://uzbekistan.travel/storage/app/media/uploaded-files/samarkand-uzbekistan-kupol-mechet-ploshchad.png" />
         </ClientOnly>
 
+        <!-- CityHead Section - layered depth typography -->
+        <ClientOnly>
+            <CityHead :progress="cityHeadProgress" city-name="SAMARKAND" background-image="~/assets/images/registan.jpg"
+                foreground-image="~/assets/images/registan-silhouette.png" />
+        </ClientOnly>
+
         <!-- Visual Scroll Indicator -->
-        <div v-if="aboutProgress < 0.95" class="scroll-indicator">
+        <div v-if="cityHeadProgress < 0.95" class="scroll-indicator">
             <div class="scroll-track">
-                <div class="scroll-thumb" :style="{ height: `${Math.max(20, scrollProgress * 100)}%` }" />
+                <div class="scroll-thumb" :style="{ height: `${Math.max(20, (scrollProgress / 2) * 100)}%` }" />
             </div>
         </div>
     </div>

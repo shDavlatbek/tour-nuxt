@@ -21,12 +21,18 @@ export function useScrollTransition() {
   
   // Configuration
   const DAMPING_FACTOR = 0.05
-  // const WHEEL_SENSITIVITY = 0.001 // How much wheel delta affects progress
   const WHEEL_SENSITIVITY = 0.0005 // How much wheel delta affects progress
-  // const TOUCH_SENSITIVITY = 0.002 // How much touch delta affects progress
   const TOUCH_SENSITIVITY = 0.001 // How much touch delta affects progress
+  const MAX_SCROLL = 2 // Extended for CityHead section (0-1 = original, 1-2 = CityHead)
   
   const isMapZoomed = ref(false)
+  
+  // --- Section Pinning ---
+  // Brief pause when reaching section boundaries
+  const SECTION_PINS = [1.0] // AboutSection complete, CityHead starts
+  const PIN_DURATION = 300 // ms to hold at pin point
+  let isPinned = false
+  let lastCrossedPin: number | null = null
 
   // --- Computed Phases ---
 
@@ -51,7 +57,15 @@ export function useScrollTransition() {
   const aboutProgress = computed(() => {
     const p = scrollProgress.value
     if (p < 0.5) return 0
+    if (p > 1.0) return 1
     return (p - 0.5) * 2
+  })
+
+  // CityHead: 1.0 -> 2.0 scroll range (after About section)
+  const cityHeadProgress = computed(() => {
+    const p = scrollProgress.value
+    if (p < 1.0) return 0
+    return Math.min(1, p - 1.0)
   })
 
   // --- Animation Loop (Smoothness Engine) ---
@@ -77,6 +91,42 @@ export function useScrollTransition() {
 
   // --- Virtual Scroll Handlers ---
 
+  // Check if crossing a pin point and apply pinning
+  function checkPinning(oldTarget: number, newTarget: number): number {
+    if (isPinned) return oldTarget // Stay at current position while pinned
+    
+    for (const pin of SECTION_PINS) {
+      // Crossing pin point (either direction)
+      const crossingDown = oldTarget < pin && newTarget >= pin
+      const crossingUp = oldTarget > pin && newTarget <= pin
+      
+      if (crossingDown || crossingUp) {
+        // Only trigger if we haven't just crossed this pin
+        if (lastCrossedPin !== pin) {
+          isPinned = true
+          lastCrossedPin = pin
+          
+          // Release after PIN_DURATION
+          setTimeout(() => {
+            isPinned = false
+          }, PIN_DURATION)
+          
+          return pin // Snap to pin point
+        }
+      }
+    }
+    
+    // Clear last crossed pin if we've moved away
+    if (lastCrossedPin !== null) {
+      const awayFromPin = Math.abs(newTarget - lastCrossedPin) > 0.1
+      if (awayFromPin) {
+        lastCrossedPin = null
+      }
+    }
+    
+    return newTarget
+  }
+
   function handleWheel(e: WheelEvent) {
     if (isMapZoomed.value) return
     
@@ -85,7 +135,8 @@ export function useScrollTransition() {
     
     // Update target based on wheel delta
     const delta = e.deltaY * WHEEL_SENSITIVITY
-    targetProgress = Math.min(1, Math.max(0, targetProgress + delta))
+    const rawTarget = Math.min(MAX_SCROLL, Math.max(0, targetProgress + delta))
+    targetProgress = checkPinning(targetProgress, rawTarget)
     
     startTick()
   }
@@ -109,7 +160,8 @@ export function useScrollTransition() {
     
     // Update target based on touch delta
     const delta = deltaY * TOUCH_SENSITIVITY
-    targetProgress = Math.min(1, Math.max(0, targetProgress + delta))
+    const rawTarget = Math.min(MAX_SCROLL, Math.max(0, targetProgress + delta))
+    targetProgress = checkPinning(targetProgress, rawTarget)
     
     startTick()
   }
@@ -183,6 +235,7 @@ export function useScrollTransition() {
     zoomProgress,
     cloudProgress,
     aboutProgress,
+    cityHeadProgress,
     isMapZoomed,
     setMapZoomed,
     reset,
