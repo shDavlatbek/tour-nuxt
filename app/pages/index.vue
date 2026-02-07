@@ -115,11 +115,6 @@ watch(isNativeScrollEnabled, (enabled) => {
 
         <!-- CityHead below About -->
         <CityHead city-name="SAMARKAND" :background-image="registanBackground" />
-
-        <!-- Scroll up hint -->
-        <div class="scroll-hint" :class="{ 'scroll-hint--visible': shouldReturnToVirtual }">
-            ↑ Scroll up to go back to map
-        </div>
     </div>
 </template>
 
@@ -161,6 +156,10 @@ watch(isNativeScrollEnabled, (enabled) => {
     visibility: visible;
     pointer-events: auto;
 }
+
+/* ===== Custom Scrollbar Styling ===== */
+
+
 
 /* About section container - full viewport height */
 .about-section-container {
