@@ -29,8 +29,12 @@ export function useScrollTransition() {
   
   // --- Section Pinning ---
   // Brief pause when reaching section boundaries
-  const SECTION_PINS = [1.0] // AboutSection complete, CityHead starts
-  const PIN_DURATION = 300 // ms to hold at pin point
+  // CONFIGURABLE: How long to hold at About section before allowing scroll to CityHead (in ms)
+  const ABOUT_SECTION_PIN_DURATION = 800 // <-- Adjust this value to change hold duration
+  
+  const SECTION_PINS = [
+    { position: 0.99, duration: ABOUT_SECTION_PIN_DURATION }, // About section complete
+  ]
   let isPinned = false
   let lastCrossedPin: number | null = null
 
@@ -97,21 +101,21 @@ export function useScrollTransition() {
     
     for (const pin of SECTION_PINS) {
       // Crossing pin point (either direction)
-      const crossingDown = oldTarget < pin && newTarget >= pin
-      const crossingUp = oldTarget > pin && newTarget <= pin
+      const crossingDown = oldTarget < pin.position && newTarget >= pin.position
+      const crossingUp = oldTarget > pin.position && newTarget <= pin.position
       
       if (crossingDown || crossingUp) {
         // Only trigger if we haven't just crossed this pin
-        if (lastCrossedPin !== pin) {
+        if (lastCrossedPin !== pin.position) {
           isPinned = true
-          lastCrossedPin = pin
+          lastCrossedPin = pin.position
           
-          // Release after PIN_DURATION
+          // Release after pin's specific duration
           setTimeout(() => {
             isPinned = false
-          }, PIN_DURATION)
+          }, pin.duration)
           
-          return pin // Snap to pin point
+          return pin.position // Snap to pin point
         }
       }
     }

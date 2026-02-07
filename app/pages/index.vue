@@ -2,9 +2,8 @@
 import { useSeoMeta } from 'nuxt/app'
 import { useScrollTransition } from '../composables/useScrollTransition'
 
-// Import images for CityHead section
+// Import image for CityHead section
 import registanBackground from '~/assets/images/registan.jpg'
-import registanForeground from '~/assets/images/registan2.png'
 
 useSeoMeta({
     title: 'Uzbekistan Tourism - Hidden Gems',
@@ -45,11 +44,8 @@ function handleMapZoomChange(zoomed: boolean) {
                 background-image="https://uzbekistan.travel/storage/app/media/uploaded-files/samarkand-uzbekistan-kupol-mechet-ploshchad.png" />
         </ClientOnly>
 
-        <!-- CityHead Section - layered depth typography -->
-        <ClientOnly>
-            <CityHead :progress="cityHeadProgress" city-name="SAMARKAND" :background-image="registanBackground"
-                :foreground-image="registanForeground" />
-        </ClientOnly>
+        <!-- CityHead Section - simple big centered text with parallax image -->
+        <CityHead city-name="SAMARKAND" :background-image="registanBackground" />
 
         <!-- Visual Scroll Indicator -->
         <div v-if="cityHeadProgress < 0.95" class="scroll-indicator">
