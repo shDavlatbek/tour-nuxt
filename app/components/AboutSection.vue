@@ -20,6 +20,7 @@ const sectionStyle = computed(() => {
 
     return {
         transform: `translateY(${translateY}%)`,
+        visibility: (props.progress > 0.001 ? 'visible' : 'hidden') as 'visible' | 'hidden',
     }
 })
 
@@ -97,6 +98,7 @@ const isInteractive = computed(() => props.progress > 0.95)
     left: 0;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
     background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
     z-index: 60;
     display: flex;
@@ -253,31 +255,138 @@ const isInteractive = computed(() => props.progress > 0.95)
     color: rgba(255, 255, 255, 0.7);
 }
 
-@media (max-width: 768px) {
+/* Mobile (Phones) */
+@media (max-width: 767px) {
     .about-content {
-        padding: 40px 24px;
+        padding: 24px 20px;
+        max-width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        height: 100%;
     }
 
     .about-title {
-        font-size: 2.5rem;
+        font-size: 2rem;
+        margin-bottom: 24px;
+        line-height: 1.2;
     }
 
     .about-subtitle {
-        font-size: 1rem;
+        font-size: 0.9rem;
+        margin-bottom: 16px;
+    }
+
+    .about-description {
         margin-bottom: 32px;
     }
 
     .about-description p {
-        font-size: 1rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 12px;
+        /* Limit text lines if needed, or just keep it concise */
     }
 
     .about-stats {
-        flex-direction: column;
-        gap: 32px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 16px 24px;
+        margin-bottom: 32px;
+    }
+
+    .stat-item {
+        flex: 0 1 auto;
+        /* Allow items to shrink but stay in row if possible */
+        min-width: 80px;
     }
 
     .stat-number {
-        font-size: 2.2rem;
+        font-size: 1.8rem;
+    }
+
+    .stat-label {
+        font-size: 0.7rem;
+        letter-spacing: 0.1em;
+    }
+
+    .about-button {
+        width: 100%;
+        padding: 12px 20px;
+        font-size: 1rem;
+    }
+}
+
+/* Tablet (Portrait & Small Landscape) */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .about-content {
+        padding: 50px 32px;
+        max-width: 90%;
+    }
+
+    .about-title {
+        font-size: 3rem;
+        margin-bottom: 40px;
+    }
+
+    .about-subtitle {
+        font-size: 1.2rem;
+    }
+
+    .about-description p {
+        font-size: 1.1rem;
+    }
+
+    .about-stats {
+        gap: 40px;
+    }
+
+    .stat-number {
+        font-size: 2.8rem;
+    }
+}
+
+/* Laptop (Small Desktops) */
+@media (min-width: 1025px) and (max-width: 1440px) {
+    .about-content {
+        max-width: 800px;
+        padding: 60px;
+    }
+
+    .about-title {
+        font-size: 3.5rem;
+    }
+}
+
+/* Short screens (Landscape Mobile) */
+@media (max-height: 600px) {
+    .about-content {
+        padding: 20px;
+    }
+
+    .about-title {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+
+    .about-subtitle {
+        margin-bottom: 10px;
+    }
+
+    .about-description {
+        display: none;
+        /* Hide description on very short screens to fit stats/button */
+    }
+
+    .about-stats {
+        margin-bottom: 20px;
+        flex-direction: row;
+        gap: 20px;
+    }
+
+    .stat-number {
+        font-size: 2rem;
     }
 }
 </style>
