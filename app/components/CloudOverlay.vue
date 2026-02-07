@@ -20,29 +20,24 @@ const CLOUD_CONFIGS = [
   { id: 8, sx: 50, sy: 50, s: 2.0 },
 ]
 
-// 2. Only check visibility to prevent rendering when not needed
-const isVisible = computed(() => props.progress > -1 && props.aboutProgress < 1)
+// 2. Check if clouds should be visible (never destroy DOM, use CSS instead)
+const isActive = computed(() => props.progress > 0.01 && props.aboutProgress < 0.99)
 
-// 3. Pass progress purely as a CSS variable to the container
+// 3. Pass progress as a CSS variable + control visibility via CSS class
 const containerStyle = computed(() => ({
-  '--p': props.progress
+  '--p': Math.max(0, props.progress)
 }))
 </script>
 
 <template>
-  <div v-if="isVisible" class="cloud-overlay" :style="containerStyle">
-    <img 
-      v-for="cloud in CLOUD_CONFIGS" 
-      :key="cloud.id" 
-      src="/images/cloudsh.png" 
-      alt="" 
-      class="cloud-sprite"
-      :style="{ 
-        '--sx': cloud.sx, 
-        '--sy': cloud.sy, 
-        '--s': cloud.s 
-      }" 
-    />
+  <!-- Use v-show instead of v-if to prevent DOM unmount/remount flickering on mobile -->
+  <div v-show="props.aboutProgress < 1" class="cloud-overlay" :class="{ 'cloud-overlay--active': isActive }"
+    :style="containerStyle">
+    <img v-for="cloud in CLOUD_CONFIGS" :key="cloud.id" src="/images/cloudsh.png" alt="" class="cloud-sprite" :style="{
+      '--sx': cloud.sx,
+      '--sy': cloud.sy,
+      '--s': cloud.s
+    }" />
   </div>
 </template>
 
@@ -57,7 +52,19 @@ const containerStyle = computed(() => ({
   z-index: 50;
   overflow: hidden;
   /* Optimization: Isolate layout calculations */
-  contain: strict; 
+  contain: strict;
+
+  /* Hidden by default - prevents flickering on mobile */
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s 0.2s, opacity 0.2s ease-out;
+}
+
+/* Active state - clouds are visible */
+.cloud-overlay--active {
+  visibility: visible;
+  opacity: 1;
+  transition: visibility 0s, opacity 0.2s ease-out;
 }
 
 .cloud-sprite {
@@ -67,24 +74,23 @@ const containerStyle = computed(() => ({
   width: 50vw;
   min-width: 400px;
   height: auto;
-  
-  /* 5. Performance Critical: Hint browser to use GPU */
+
+  /* Performance Critical: Hint browser to use GPU */
   will-change: transform, opacity;
   backface-visibility: hidden;
+  /* Force GPU layer on mobile */
+  transform-style: preserve-3d;
 
   /* 6. CSS MATH 
      x = startX * (1 - p * 0.6) 
      We use var(--p) which comes from props.progress
   */
   --move-factor: calc(1 - (var(--p) * 0.6));
-  
-  transform: 
-    translate3d(
-      calc(-50% + (var(--sx) * 1vw * var(--move-factor))), 
-      calc(-50% + (var(--sy) * 1vh * var(--move-factor))), 
-      0
-    ) 
-    scale(calc(var(--s) * (1 + var(--p) * 0.3)));
+
+  transform:
+    translate3d(calc(-50% + (var(--sx) * 1vw * var(--move-factor))),
+      calc(-50% + (var(--sy) * 1vh * var(--move-factor))),
+      0) scale(calc(var(--s) * (1 + var(--p) * 0.3)));
 
   /* Opacity: calc handles values > 1 automatically (clamps to 1 visually) */
   opacity: calc(var(--p) * 1.5);
