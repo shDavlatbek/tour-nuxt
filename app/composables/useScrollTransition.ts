@@ -20,9 +20,11 @@ export function useScrollTransition() {
   let touchCurrentY = 0
   
   // Configuration
-  const DAMPING_FACTOR = 0.08
-  const WHEEL_SENSITIVITY = 0.001 // How much wheel delta affects progress
-  const TOUCH_SENSITIVITY = 0.002 // How much touch delta affects progress
+  const DAMPING_FACTOR = 0.05
+  // const WHEEL_SENSITIVITY = 0.001 // How much wheel delta affects progress
+  const WHEEL_SENSITIVITY = 0.0005 // How much wheel delta affects progress
+  // const TOUCH_SENSITIVITY = 0.002 // How much touch delta affects progress
+  const TOUCH_SENSITIVITY = 0.001 // How much touch delta affects progress
   
   const isMapZoomed = ref(false)
 

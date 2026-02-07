@@ -42,22 +42,29 @@ onMounted(() => {
     if (target) {
       // 3. V4 Syntax: .add(target, params, offset)
       tl.add(target, {
-        // Translate view-width (vw) to approximate pixels or use string units if supported
-        // V4 handles string units cleanly
-        translateX: [
-            { to: `${cloud.sx}vw`, duration: 0 }, 
-            { to: `${cloud.sx * 0.4}vw`, duration: 1000 }
-        ],
-        translateY: [
-            { to: `${cloud.sy}vh`, duration: 0 },
-            { to: `${cloud.sy * 0.4}vh`, duration: 1000 }
-        ],
-        scale: [
-            { to: cloud.s, duration: 0 },
-            { to: cloud.s * 1.3, duration: 1000 }
-        ],
-        opacity: { to: 1.5, duration: 1000 }, 
-      }, 0) // '0' is the offset (start at time 0)
+      // 1. MOVEMENT: From Edges (sx * 2) -> Center (0)
+      translateX: [
+        { to: `${cloud.sx * 2.5}vw`, duration: 0 }, // Start FAR off-screen
+        { to: '0vw', duration: 1000 } // End at center
+      ],
+      translateY: [
+        { to: `${cloud.sy * 2.5}vh`, duration: 0 },
+        { to: '0vh', duration: 1000 }
+      ],
+
+      // 2. SCALE: Start normal -> End Huge (covers screen)
+      scale: [
+        { to: cloud.s, duration: 0 },
+        { to: cloud.s * 4, duration: 1000 } // Huge zoom effect
+      ],
+
+      // 3. OPACITY: Fade in smoothly at the start
+      opacity: [
+        { to: 0, duration: 0 },    // Start invisible
+        { to: 1, duration: 200 },  // Fade in by 20% progress
+        { to: 1, duration: 800 }   // Stay visible
+      ]
+    }, 0)
     }
   })
 })
@@ -72,7 +79,7 @@ watch(() => props.progress, (newVal) => {
 </script>
 
 <template>
-  <div ref="containerRef" class="cloud-container" v-show="props.aboutProgress < 1">
+  <div ref="containerRef" class="cloud-container" v-show="props.progress > 0.01 && props.aboutProgress < 0.99">
     <img v-for="cloud in CLOUD_CONFIGS" :key="cloud.id" src="/images/cloudsh.png" class="cloud-sprite" />
   </div>
 </template>
