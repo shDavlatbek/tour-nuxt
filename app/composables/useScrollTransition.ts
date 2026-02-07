@@ -30,10 +30,10 @@ export function useScrollTransition() {
   // --- Section Pinning ---
   // Brief pause when reaching section boundaries
   // CONFIGURABLE: How long to hold at About section before allowing scroll to CityHead (in ms)
-  const ABOUT_SECTION_PIN_DURATION = 800 // <-- Adjust this value to change hold duration
+  const ABOUT_SECTION_PIN_DURATION = 2000 // <-- Adjust this value to change hold duration
   
   const SECTION_PINS = [
-    { position: 0.99, duration: ABOUT_SECTION_PIN_DURATION }, // About section complete
+    { position: 1, duration: ABOUT_SECTION_PIN_DURATION }, // About section complete
   ]
   let isPinned = false
   let lastCrossedPin: number | null = null

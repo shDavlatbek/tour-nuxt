@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { log } from 'three';
 import { computed } from 'vue'
 
 interface Props {
@@ -22,16 +23,18 @@ const sectionStyle = computed(() => {
 
     // Exit: Move up and fade out when CityHead appears
     const exitTranslateY = props.exitProgress * -30 // Move up 30%
-    const exitOpacity = 1 - props.exitProgress
+    const exitOpacity = 1
 
     // Combine entry and exit
     const translateY = entryTranslateY + exitTranslateY
+    console.log(exitOpacity);
+    
     const opacity = props.progress > 0.001 ? exitOpacity : 0
 
     return {
         transform: `translateY(${translateY}%)`,
         opacity,
-        visibility: (props.progress > 0.001 && props.exitProgress < 0.99 ? 'visible' : 'hidden') as 'visible' | 'hidden',
+        visibility: (props.progress > 0.001 ? 'visible' : 'hidden') as 'visible' | 'hidden',
     }
 })
 
@@ -42,7 +45,7 @@ const backgroundStyle = computed(() => {
     // Fade in when progress goes from 0.8 to 1
     const fadeProgress = props.progress > 0.8
         ? (props.progress - 0.8) / 0.2
-        : (props.progress - 0.8) / 0.2
+        : 0
 
     return {
         backgroundImage: `url(${props.backgroundImage})`,
