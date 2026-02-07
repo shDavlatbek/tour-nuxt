@@ -10,8 +10,8 @@ useSeoMeta({
     ogType: 'website',
 })
 
-// Scroll transition state - uses native scroll
-const { isFrozen, zoomProgress, cloudProgress, aboutProgress, setMapZoomed } = useScrollTransition()
+// Virtual scroll transition state
+const { scrollProgress, isFrozen, zoomProgress, cloudProgress, aboutProgress, setMapZoomed } = useScrollTransition()
 
 // Handle zoom state change from HeroSection
 function handleMapZoomChange(zoomed: boolean) {
@@ -20,46 +20,82 @@ function handleMapZoomChange(zoomed: boolean) {
 </script>
 
 <template>
-    <!-- Scrollable page - 200vh creates scroll room for transition -->
-    <div class="scroll-page">
-        <!-- Fixed content layer -->
-        <div class="fixed-layer">
-            <!-- Texture Overlays -->
-            <div class="grain-overlay" />
-            <div class="vignette-overlay" />
+    <!-- Fixed viewport - no native scroll, uses virtual scroll -->
+    <div class="virtual-scroll-page">
+        <!-- Texture Overlays -->
+        <div class="grain-overlay" />
+        <div class="vignette-overlay" />
 
-            <!-- Hero Section -->
-            <HeroSection :frozen="isFrozen" :zoom-progress="zoomProgress" :hidden="aboutProgress > 0.9"
-                @zoom-change="handleMapZoomChange" />
+        <!-- Hero Section -->
+        <HeroSection :frozen="isFrozen" :zoom-progress="zoomProgress" :hidden="aboutProgress > 0.9"
+            @zoom-change="handleMapZoomChange" />
 
-            <!-- Cloud Overlay - appears during scroll -->
-            <ClientOnly>
-                <CloudOverlay :progress="cloudProgress" :about-progress="aboutProgress" />
-            </ClientOnly>
+        <!-- Cloud Overlay - appears during scroll -->
+        <ClientOnly>
+            <CloudOverlay :progress="cloudProgress" :about-progress="aboutProgress" />
+        </ClientOnly>
 
-            <!-- About Section - slides up -->
-            <ClientOnly>
-                <AboutSection :progress="aboutProgress"
-                    background-image="https://uzbekistan.travel/storage/app/media/uploaded-files/samarkand-uzbekistan-kupol-mechet-ploshchad.png" />
-                    <!--background-image="https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=1920" -->
-            </ClientOnly>
+        <!-- About Section - slides up -->
+        <ClientOnly>
+            <AboutSection :progress="aboutProgress"
+                background-image="https://uzbekistan.travel/storage/app/media/uploaded-files/samarkand-uzbekistan-kupol-mechet-ploshchad.png" />
+        </ClientOnly>
+
+        <!-- Visual Scroll Indicator -->
+        <div v-if="aboutProgress < 0.95" class="scroll-indicator">
+            <div class="scroll-track">
+                <div class="scroll-thumb" :style="{ height: `${Math.max(20, scrollProgress * 100)}%` }" />
+            </div>
         </div>
     </div>
 </template>
 
 <style scoped>
-.scroll-page {
-    /* Create scrollable height for the transition */
-    height: 200vh;
-    width: 100%;
-}
-
-.fixed-layer {
+.virtual-scroll-page {
+    /* Use dvh for mobile dynamic viewport height */
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100vh;
+    height: 100dvh;
+    /* Fallback for browsers that support dvh */
     overflow: hidden;
+}
+
+/* Visual scroll indicator on right side */
+.scroll-indicator {
+    position: fixed;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 200;
+    pointer-events: none;
+}
+
+.scroll-track {
+    width: 4px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.scroll-thumb {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 2px;
+    transition: height 0.15s ease-out;
+    min-height: 16px;
+}
+
+@media (max-width: 768px) {
+    .scroll-indicator {
+        right: 8px;
+    }
+
+    .scroll-track {
+        height: 60px;
+    }
 }
 </style>

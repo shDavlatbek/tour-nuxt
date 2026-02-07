@@ -1,16 +1,28 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 
+/**
+ * Virtual Scroll Transition
+ * 
+ * Instead of using native page scroll (which causes mobile viewport height changes),
+ * we capture wheel/touch events directly and track a "virtual" scroll position.
+ * This prevents the mobile browser address bar from hiding/showing.
+ */
 export function useScrollTransition() {
-  // The reactive value used for animations (this will lag slightly behind for smoothness)
+  // The reactive value used for animations (smoothed)
   const scrollProgress = ref(0)
   
   // Internal state for math (non-reactive for performance)
   let targetProgress = 0
-  let maxScroll = 0
   let rafId: number | null = null
   
+  // Touch tracking
+  let touchStartY = 0
+  let touchCurrentY = 0
+  
   // Configuration
-  const DAMPING_FACTOR = 0.08 // 0.05 = very slow/smooth, 0.15 = snappy
+  const DAMPING_FACTOR = 0.08
+  const WHEEL_SENSITIVITY = 0.001 // How much wheel delta affects progress
+  const TOUCH_SENSITIVITY = 0.002 // How much touch delta affects progress
   
   const isMapZoomed = ref(false)
 
@@ -22,7 +34,7 @@ export function useScrollTransition() {
   const zoomProgress = computed(() => {
     const p = scrollProgress.value
     if (p > 0.5) return 1
-    return p * 2 // Optimized: (p / 0.5) is same as (p * 2)
+    return p * 2
   })
 
   // Clouds: 0.15 -> 0.7 scroll range
@@ -37,55 +49,72 @@ export function useScrollTransition() {
   const aboutProgress = computed(() => {
     const p = scrollProgress.value
     if (p < 0.5) return 0
-    return (p - 0.5) * 2 // Optimized: (p - 0.5) / 0.5 is same as (p - 0.5) * 2
+    return (p - 0.5) * 2
   })
 
-  // --- Animation Loop (The Smoothness Engine) ---
+  // --- Animation Loop (Smoothness Engine) ---
 
   function tick() {
-    // Calculate the difference between where we are and where we want to be
     const diff = targetProgress - scrollProgress.value
     
-    // If difference is tiny, stop the loop to save battery/CPU
     if (Math.abs(diff) < 0.0005) {
       scrollProgress.value = targetProgress
       rafId = null
       return
     }
 
-    // Move 8% (DAMPING_FACTOR) of the way towards the target
     scrollProgress.value += diff * DAMPING_FACTOR
-    
-    // Request next frame
     rafId = requestAnimationFrame(tick)
   }
 
-  // --- Event Handlers ---
-
-  function handleScroll() {
-    // If map is zoomed, we rely on CSS overflow:hidden, so this usually won't fire.
-    // But as a safeguard, we return early.
-    if (isMapZoomed.value) return
-
-    const scrollTop = window.scrollY || document.documentElement.scrollTop
-    
-    // Calculate target immediately (0 to 1)
-    // We use the cached 'maxScroll' to avoid expensive DOM reads
-    if (maxScroll > 0) {
-      targetProgress = Math.min(1, Math.max(0, scrollTop / maxScroll))
-    }
-
-    // Start the animation loop if it's not running
+  function startTick() {
     if (!rafId) {
       rafId = requestAnimationFrame(tick)
     }
   }
 
-  // Heavy calculations go here, only runs on window resize
-  function handleResize() {
-    maxScroll = document.documentElement.scrollHeight - window.innerHeight
-    // Recalculate current position in case window size changed drastically
-    handleScroll()
+  // --- Virtual Scroll Handlers ---
+
+  function handleWheel(e: WheelEvent) {
+    if (isMapZoomed.value) return
+    
+    // Prevent native scroll
+    e.preventDefault()
+    
+    // Update target based on wheel delta
+    const delta = e.deltaY * WHEEL_SENSITIVITY
+    targetProgress = Math.min(1, Math.max(0, targetProgress + delta))
+    
+    startTick()
+  }
+
+  function handleTouchStart(e: TouchEvent) {
+    if (isMapZoomed.value) return
+    
+    touchStartY = e.touches[0]!.clientY
+    touchCurrentY = touchStartY
+  }
+
+  function handleTouchMove(e: TouchEvent) {
+    if (isMapZoomed.value) return
+    
+    // Prevent native scroll
+    e.preventDefault()
+    
+    const newY = e.touches[0]!.clientY
+    const deltaY = touchCurrentY - newY // Inverted: swipe up = positive delta
+    touchCurrentY = newY
+    
+    // Update target based on touch delta
+    const delta = deltaY * TOUCH_SENSITIVITY
+    targetProgress = Math.min(1, Math.max(0, targetProgress + delta))
+    
+    startTick()
+  }
+
+  function handleTouchEnd() {
+    touchStartY = 0
+    touchCurrentY = 0
   }
 
   // --- Locking Logic ---
@@ -94,14 +123,11 @@ export function useScrollTransition() {
     if (typeof document === 'undefined') return
 
     if (zoomed) {
-      // Modern way to lock scroll without breaking event listeners
       document.body.style.overflow = 'hidden'
-      document.body.style.touchAction = 'none' // Disable touch on mobile
+      document.body.style.touchAction = 'none'
     } else {
-      document.body.style.overflow = ''
-      document.body.style.touchAction = ''
-      // Re-measure in case layout changed while zoomed
-      handleResize() 
+      document.body.style.overflow = 'hidden' // Keep hidden for virtual scroll
+      document.body.style.touchAction = 'none'
     }
   })
 
@@ -110,9 +136,6 @@ export function useScrollTransition() {
   }
 
   function reset() {
-    if (typeof window !== 'undefined') {
-      window.scrollTo(0, 0)
-    }
     targetProgress = 0
     scrollProgress.value = 0
     if (rafId) cancelAnimationFrame(rafId)
@@ -124,25 +147,32 @@ export function useScrollTransition() {
   onMounted(() => {
     if (typeof window === 'undefined') return
 
-    // Calculate dimensions first
-    handleResize()
-
-    // Add listeners
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    window.addEventListener('resize', handleResize, { passive: true })
+    // Lock the body to prevent native scroll
+    document.body.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
+    document.documentElement.style.overflow = 'hidden'
+    
+    // Use { passive: false } to allow preventDefault
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    window.addEventListener('touchstart', handleTouchStart, { passive: true })
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    window.addEventListener('touchend', handleTouchEnd, { passive: true })
   })
 
   onUnmounted(() => {
     if (typeof window === 'undefined') return
 
-    window.removeEventListener('scroll', handleScroll)
-    window.removeEventListener('resize', handleResize)
+    window.removeEventListener('wheel', handleWheel)
+    window.removeEventListener('touchstart', handleTouchStart)
+    window.removeEventListener('touchmove', handleTouchMove)
+    window.removeEventListener('touchend', handleTouchEnd)
     
     if (rafId) cancelAnimationFrame(rafId)
     
-    // Safety cleanup
+    // Cleanup
     document.body.style.overflow = ''
     document.body.style.touchAction = ''
+    document.documentElement.style.overflow = ''
   })
 
   return {
