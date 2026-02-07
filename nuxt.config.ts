@@ -18,12 +18,7 @@ export default defineNuxtConfig({
   },
   vite: {
     server: {
-      allowedHosts: [
-        'localhost',
-        '127.0.0.1',
-        '0.0.0.0',
-        'tourism-villages.vercel.app',
-      ]
+      allowedHosts: true
     }
   }
 })
