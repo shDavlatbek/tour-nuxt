@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { log } from 'three';
 import { computed } from 'vue'
 
 interface Props {
     progress: number // 0 to 1 (entry animation)
-    exitProgress?: number // 0 to 1 (exit animation when CityHead appears)
     backgroundImage?: string // URL from backend
 }
 
 const props = withDefaults(defineProps<Props>(), {
     backgroundImage: '',
-    exitProgress: 0,
 })
 
 // Show background image when progress > 0.8
@@ -18,22 +15,11 @@ const showBackgroundImage = computed(() => props.progress > 0.8 && props.backgro
 
 // Transform calculation for slide-up effect
 const sectionStyle = computed(() => {
-    // Entry: Start from 100% below (translateY 100%) and move to 0%
-    const entryTranslateY = 100 - props.progress * 100
-
-    // Exit: Move up and fade out when CityHead appears
-    const exitTranslateY = props.exitProgress * -30 // Move up 30%
-    const exitOpacity = 1
-
-    // Combine entry and exit
-    const translateY = entryTranslateY + exitTranslateY
-    console.log(exitOpacity);
-    
-    const opacity = props.progress > 0.001 ? exitOpacity : 0
+    // Start from 100% below (translateY 100%) and move to 0%
+    const translateY = 100 - props.progress * 100
 
     return {
         transform: `translateY(${translateY}%)`,
-        opacity,
         visibility: (props.progress > 0.001 ? 'visible' : 'hidden') as 'visible' | 'hidden',
     }
 })

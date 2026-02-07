@@ -52,7 +52,7 @@ withDefaults(defineProps<Props>(), {
     object-position: center 30%;
 }
 
-/* Big centered text */
+/* Big centered text with animate.style-like animation */
 .city-head__title {
     position: relative;
     z-index: 2;
@@ -68,6 +68,21 @@ withDefaults(defineProps<Props>(), {
         0 8px 60px rgba(0, 0, 0, 0.4);
     white-space: nowrap;
     user-select: none;
+
+    /* animate.style fadeInUp */
+    animation: fadeInUp 1s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Mobile */

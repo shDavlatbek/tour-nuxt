@@ -23,7 +23,8 @@ export function useScrollTransition() {
   const DAMPING_FACTOR = 0.05
   const WHEEL_SENSITIVITY = 0.0005 // How much wheel delta affects progress
   const TOUCH_SENSITIVITY = 0.001 // How much touch delta affects progress
-  const MAX_SCROLL = 2 // Extended for CityHead section (0-1 = original, 1-2 = CityHead)
+  const MAX_SCROLL = 1 // Only Hero → About transition uses virtual scroll
+  
   
   const isMapZoomed = ref(false)
   
@@ -65,12 +66,8 @@ export function useScrollTransition() {
     return (p - 0.5) * 2
   })
 
-  // CityHead: 1.0 -> 2.0 scroll range (after About section)
-  const cityHeadProgress = computed(() => {
-    const p = scrollProgress.value
-    if (p < 1.0) return 0
-    return Math.min(1, p - 1.0)
-  })
+  // Native scroll is enabled when About section is complete
+  const isNativeScrollEnabled = computed(() => scrollProgress.value >= 0.99)
 
   // --- Animation Loop (Smoothness Engine) ---
 
@@ -134,7 +131,24 @@ export function useScrollTransition() {
   function handleWheel(e: WheelEvent) {
     if (isMapZoomed.value) return
     
-    // Prevent native scroll
+    // If we've reached the end (About complete), allow native scroll
+    if (scrollProgress.value >= 0.99 && e.deltaY > 0) {
+      // Scrolling down past About - let native scroll handle it
+      return
+    }
+    
+    // If we're in native scroll territory and scrolling up, check if at top
+    if (scrollProgress.value >= 0.99 && e.deltaY < 0) {
+      // Only capture if we need to scroll back into virtual scroll
+      const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+      if (scrollTop > 0) {
+        // Still scrolled down in native content, let native handle it
+        return
+      }
+      // At top of native scroll, capture to go back to virtual scroll
+    }
+    
+    // Prevent native scroll for virtual scroll section
     e.preventDefault()
     
     // Update target based on wheel delta
@@ -155,11 +169,28 @@ export function useScrollTransition() {
   function handleTouchMove(e: TouchEvent) {
     if (isMapZoomed.value) return
     
-    // Prevent native scroll
-    e.preventDefault()
-    
     const newY = e.touches[0]!.clientY
     const deltaY = touchCurrentY - newY // Inverted: swipe up = positive delta
+    
+    // If we've reached the end (About complete), allow native scroll
+    if (scrollProgress.value >= 0.99 && deltaY > 0) {
+      // Swiping up past About - let native scroll handle it
+      touchCurrentY = newY
+      return
+    }
+    
+    // If we're in native scroll territory and swiping down, check if at top
+    if (scrollProgress.value >= 0.99 && deltaY < 0) {
+      const scrollTop = document.documentElement.scrollTop || document.body.scrollTop
+      if (scrollTop > 0) {
+        touchCurrentY = newY
+        return
+      }
+    }
+    
+    // Prevent native scroll for virtual scroll section
+    e.preventDefault()
+    
     touchCurrentY = newY
     
     // Update target based on touch delta
@@ -202,28 +233,63 @@ export function useScrollTransition() {
 
   // --- Lifecycle ---
 
-  onMounted(() => {
-    if (typeof window === 'undefined') return
+  let listenersAttached = false
 
-    // Lock the body to prevent native scroll
-    document.body.style.overflow = 'hidden'
-    document.body.style.touchAction = 'none'
-    document.documentElement.style.overflow = 'hidden'
-    
-    // Use { passive: false } to allow preventDefault
+  function attachListeners() {
+    if (listenersAttached || typeof window === 'undefined') return
     window.addEventListener('wheel', handleWheel, { passive: false })
     window.addEventListener('touchstart', handleTouchStart, { passive: true })
     window.addEventListener('touchmove', handleTouchMove, { passive: false })
     window.addEventListener('touchend', handleTouchEnd, { passive: true })
+    listenersAttached = true
+  }
+
+  function detachListeners() {
+    if (!listenersAttached || typeof window === 'undefined') return
+    window.removeEventListener('wheel', handleWheel)
+    window.removeEventListener('touchstart', handleTouchStart)
+    window.removeEventListener('touchmove', handleTouchMove)
+    window.removeEventListener('touchend', handleTouchEnd)
+    listenersAttached = false
+  }
+
+  // Watch for native scroll enable/disable
+  watch(isNativeScrollEnabled, (enabled) => {
+    if (typeof document === 'undefined') return
+
+    if (enabled) {
+      // Remove event listeners and enable native scroll
+      detachListeners()
+      document.body.style.overflow = ''
+      document.body.style.touchAction = ''
+      document.documentElement.style.overflow = ''
+    } else {
+      // Re-attach event listeners and disable native scroll
+      attachListeners()
+      document.body.style.overflow = 'hidden'
+      document.body.style.touchAction = 'none'
+      document.documentElement.style.overflow = 'hidden'
+    }
+  })
+
+  onMounted(() => {
+    if (typeof window === 'undefined') return
+
+    // Lock the body to prevent native scroll initially
+    document.body.style.overflow = 'hidden'
+    document.body.style.touchAction = 'none'
+    document.documentElement.style.overflow = 'hidden'
+    
+    // Attach listeners only if not already in native scroll mode
+    if (!isNativeScrollEnabled.value) {
+      attachListeners()
+    }
   })
 
   onUnmounted(() => {
     if (typeof window === 'undefined') return
 
-    window.removeEventListener('wheel', handleWheel)
-    window.removeEventListener('touchstart', handleTouchStart)
-    window.removeEventListener('touchmove', handleTouchMove)
-    window.removeEventListener('touchend', handleTouchEnd)
+    detachListeners()
     
     if (rafId) cancelAnimationFrame(rafId)
     
@@ -239,7 +305,7 @@ export function useScrollTransition() {
     zoomProgress,
     cloudProgress,
     aboutProgress,
-    cityHeadProgress,
+    isNativeScrollEnabled,
     isMapZoomed,
     setMapZoomed,
     reset,
