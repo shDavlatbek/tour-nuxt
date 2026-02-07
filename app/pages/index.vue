@@ -15,7 +15,7 @@ useSeoMeta({
 })
 
 // Virtual scroll transition state (Hero → About only)
-const { scrollProgress, isFrozen, zoomProgress, cloudProgress, aboutProgress, isNativeScrollEnabled, setMapZoomed, reset } = useScrollTransition()
+const { scrollProgress, isFrozen, zoomProgress, cloudProgress, aboutProgress, isNativeScrollEnabled, setMapZoomed, returnToAbout, reset } = useScrollTransition()
 
 // Handle zoom state change from HeroSection
 function handleMapZoomChange(zoomed: boolean) {
@@ -45,10 +45,10 @@ function handleWheelAtTop(e: WheelEvent) {
 
     const scrollTop = window.scrollY || document.documentElement.scrollTop
 
-    // If at top and trying to scroll up, return to virtual scroll
+    // If at top and trying to scroll up, return to virtual scroll (About section)
     if (scrollTop <= 0 && e.deltaY < 0) {
         e.preventDefault()
-        reset() // Reset virtual scroll to go back to beginning
+        returnToAbout() // Return to About section (preserves position)
     }
 }
 

@@ -224,6 +224,16 @@ export function useScrollTransition() {
     isMapZoomed.value = zoomed
   }
 
+  // Return to About section (preserves position near end of virtual scroll)
+  function returnToAbout() {
+    // Set to just below the native scroll threshold (0.99)
+    // This shows the About section at full progress
+    targetProgress = 0.98
+    scrollProgress.value = 0.98
+    if (rafId) cancelAnimationFrame(rafId)
+    rafId = null
+  }
+
   function reset() {
     targetProgress = 0
     scrollProgress.value = 0
@@ -308,6 +318,7 @@ export function useScrollTransition() {
     isNativeScrollEnabled,
     isMapZoomed,
     setMapZoomed,
+    returnToAbout,
     reset,
   }
 }
