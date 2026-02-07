@@ -40,7 +40,8 @@ function handleMapZoomChange(zoomed: boolean) {
             <!-- About Section - slides up -->
             <ClientOnly>
                 <AboutSection :progress="aboutProgress"
-                    background-image="https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=1920" />
+                    background-image="https://uzbekistan.travel/storage/app/media/uploaded-files/samarkand-uzbekistan-kupol-mechet-ploshchad.png" />
+                    <!--background-image="https://images.unsplash.com/photo-1596484552834-6a58f850e0a1?w=1920" -->
             </ClientOnly>
         </div>
     </div>
