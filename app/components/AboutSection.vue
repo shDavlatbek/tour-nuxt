@@ -2,12 +2,14 @@
 import { computed } from 'vue'
 
 interface Props {
-    progress: number // 0 to 1
+    progress: number // 0 to 1 (entry animation)
+    exitProgress?: number // 0 to 1 (exit animation when CityHead appears)
     backgroundImage?: string // URL from backend
 }
 
 const props = withDefaults(defineProps<Props>(), {
     backgroundImage: '',
+    exitProgress: 0,
 })
 
 // Show background image when progress > 0.8
@@ -15,12 +17,21 @@ const showBackgroundImage = computed(() => props.progress > 0.8 && props.backgro
 
 // Transform calculation for slide-up effect
 const sectionStyle = computed(() => {
-    // Start from 100% below (translateY 100%) and move to 0%
-    const translateY = 100 - props.progress * 100
+    // Entry: Start from 100% below (translateY 100%) and move to 0%
+    const entryTranslateY = 100 - props.progress * 100
+
+    // Exit: Move up and fade out when CityHead appears
+    const exitTranslateY = props.exitProgress * -30 // Move up 30%
+    const exitOpacity = 1 - props.exitProgress
+
+    // Combine entry and exit
+    const translateY = entryTranslateY + exitTranslateY
+    const opacity = props.progress > 0.001 ? exitOpacity : 0
 
     return {
         transform: `translateY(${translateY}%)`,
-        visibility: (props.progress > 0.001 ? 'visible' : 'hidden') as 'visible' | 'hidden',
+        opacity,
+        visibility: (props.progress > 0.001 && props.exitProgress < 0.99 ? 'visible' : 'hidden') as 'visible' | 'hidden',
     }
 })
 
@@ -31,7 +42,7 @@ const backgroundStyle = computed(() => {
     // Fade in when progress goes from 0.8 to 1
     const fadeProgress = props.progress > 0.8
         ? (props.progress - 0.8) / 0.2
-        : 0
+        : (props.progress - 0.8) / 0.2
 
     return {
         backgroundImage: `url(${props.backgroundImage})`,

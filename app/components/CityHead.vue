@@ -31,7 +31,7 @@ const sectionStyle = computed(() => {
 const backgroundStyle = computed(() => {
     const parallaxOffset = props.progress * 30 // Subtle upward movement
     return {
-        transform: `translateY(${-parallaxOffset}px) scale(1.1)`,
+        transform: `translateY(${-parallaxOffset}px)`,
     }
 })
 
@@ -40,7 +40,7 @@ const textStyle = computed(() => {
     const scale = 0.9 + props.progress * 0.1
     const textOpacity = Math.min(1, props.progress * 1.5)
     return {
-        transform: `scale(${scale})`,
+        // transform: `scale(${scale})`,
         opacity: textOpacity,
     }
 })
@@ -116,13 +116,13 @@ const isInteractive = computed(() => props.progress > 0.95)
 /* Layer 2: Typography - between background and foreground */
 .city-head__title {
     position: absolute;
-    top: 50%;
+    top: 20%;
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 2;
     margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(3rem, 12vw, 10rem);
+    font-size: clamp(2rem, 12vw, 10rem);
     font-weight: 400;
     color: #ffffff;
     letter-spacing: 0.1em;
