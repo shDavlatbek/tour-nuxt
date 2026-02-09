@@ -30,6 +30,7 @@ withDefaults(defineProps<Props>(), {
     box-shadow: 
         inset 0 6px 0 0 #d4af37,
         inset 0 -6px 0 0 #d4af37;
+    background-color: rgba(0, 0, 0, 0.1);
 }
 
 .city-head__title {

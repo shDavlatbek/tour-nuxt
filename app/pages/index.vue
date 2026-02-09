@@ -31,9 +31,18 @@ const {
 // --- 2. DEFINE SECTION PHASES (All return { progress, style }) ---
 // Hero + About fixed animations (0 to 1.0)
 const isFrozen = computed(() => scrollProgress.value > 0.05)
-const heroPhase = createPhase(0, 0.5, { direction: 'none' })      // 0 → 0.5 = Hero zoom
+const heroPhase = createPhase(0, 0.5, { direction: 'none' })      // 0 → 0.5 = Hero zoom out
 const cloudPhase = createPhase(0.15, 1.0, { direction: 'none' })  // 0.15 → 1.0 = Cloud overlay
 const aboutPhase = createPhase(0.5, 1.0, { direction: 'up' })     // 0.5 → 1.0 = About section
+const mapZoomInPhase = createPhase(0.7, 1.0, { direction: 'none' }) // 0.7 → 1.0 = Map zooms back in
+
+// Combined zoom: zoom out (0→0.5) then zoom back in (0.7→1.0)
+const combinedZoomProgress = computed(() => {
+    const zoomOut = heroPhase.progress.value       // 0→1 as scroll 0→0.5
+    const zoomIn = mapZoomInPhase.progress.value   // 0→1 as scroll 0.7→1.0
+    // First zoom out, then reverse back in
+    return zoomOut - (zoomOut * zoomIn)
+})
 
 // About section scrolls OUT as CityHead comes in (continues past 1.0)
 // Standard: 1.0 virtual unit = 100dvh (same as useScrollableSection)
@@ -83,8 +92,8 @@ const scrollIndicatorProgress = computed(() => {
         <!-- Fixed Layer: Hero + About (animated by scroll progress) -->
         <div class="fixed-layer">
             <!-- Hero Section -->
-            <HeroSection :frozen="isFrozen" :zoom-progress="heroPhase.progress.value"
-                :hidden="aboutPhase.progress.value > 0.9" @zoom-change="handleMapZoomChange" />
+            <HeroSection :frozen="isFrozen" :zoom-progress="combinedZoomProgress" :hidden="scrollProgress > 1.0"
+                @zoom-change="handleMapZoomChange" />
 
             <!-- Cloud Overlay - appears during scroll -->
             <ClientOnly>

@@ -172,7 +172,7 @@ function handleBackClick() {
         </ClientOnly>
 
         <!-- UI Layer -->
-        <div class="hero__ui-layer">
+        <div class="hero__ui-layer" v-if="!hidden">
             <div class="hero__header">
                 <h1 class="hero__title">Tourism Villages</h1>
                 <p class="hero__subtitle">in UZBEKISTAN</p>
