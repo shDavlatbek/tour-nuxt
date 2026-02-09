@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch } from 'vue'
+import { watch, computed } from 'vue'
 import { useSeoMeta } from 'nuxt/app'
 import { useScrollTransition } from '../composables/useScrollTransition'
 import { useScrollableSection } from '../composables/useScrollableSection'
@@ -16,16 +16,10 @@ useSeoMeta({
 })
 
 // --- 1. SETUP ENGINE ---
-// Initial scroll length: 1.0 for Hero+About fixed animations
 const {
     scrollProgress,
     setMaxScroll,
     createPhase,
-    // Legacy computed phases
-    isFrozen,
-    zoomProgress,
-    cloudProgress,
-    aboutProgress,
     setMapZoomed
 } = useScrollTransition({
     initialMaxScroll: 2.0,
@@ -34,12 +28,19 @@ const {
     ]
 })
 
+// --- 2. DEFINE SECTION PHASES (All dynamic via createPhase!) ---
+// Hero + About fixed animations (0 to 1.0)
+const isFrozen = computed(() => scrollProgress.value > 0.05)
+const zoomProgress = createPhase(0, 0.5)        // 0 → 0.5 = Hero zoom
+const cloudProgress = createPhase(0.15, 0.7)    // 0.15 → 0.7 = Cloud overlay
+const aboutProgress = createPhase(0.5, 1.0)     // 0.5 → 1.0 = About section
+
 // Handle zoom state change from HeroSection
 function handleMapZoomChange(zoomed: boolean) {
     setMapZoomed(zoomed)
 }
 
-// --- 2. DYNAMIC SECTIONS ---
+// --- 3. DYNAMIC SECTIONS ---
 
 // CityHead starts at 1.0 (after About section)
 const CITYHEAD_START = 1.0
@@ -52,14 +53,14 @@ const {
     startAt: CITYHEAD_START
 })
 
-// --- 3. UPDATE TOTAL SCROLL LENGTH ---
+// --- 4. UPDATE TOTAL SCROLL LENGTH ---
 watch(cityHeadLength, () => {
     const total = CITYHEAD_START + cityHeadLength.value
     setMaxScroll(total)
 }, { immediate: true })
 
-// Scroll indicator percentage (for visual feedback)
-const scrollPercentage = createPhase(0, 1.0) // First section (fixed animations)
+// Scroll indicator percentage
+const scrollPercentage = createPhase(0, 1.0)
 </script>
 
 <template>
@@ -99,7 +100,7 @@ const scrollPercentage = createPhase(0, 1.0) // First section (fixed animations)
         </div>
 
         <!-- Debug (remove in production) -->
-        <!-- <div class="debug">{{ scrollProgress.toFixed(2) }} / {{ (CITYHEAD_START + cityHeadLength).toFixed(2) }}</div> -->
+        <div class="debug">{{ scrollProgress.toFixed(2) }} / {{ (CITYHEAD_START + cityHeadLength).toFixed(2) }}</div>
     </div>
 </template>
 

@@ -38,26 +38,6 @@ export function useScrollTransition(options: ScrollOptions = {}) {
   let isPinned = false
   let lastCrossedPin: number | null = null
 
-  // --- Computed Phases (Legacy Support) ---
-  const isFrozen = computed(() => scrollProgress.value > 0.05)
-  const zoomProgress = computed(() => {
-    const p = scrollProgress.value
-    if (p > 0.5) return 1
-    return p * 2
-  })
-  const cloudProgress = computed(() => {
-    const p = scrollProgress.value
-    if (p < 0.15) return 0
-    if (p > 0.7) return 1
-    return (p - 0.15) / 0.55
-  })
-  const aboutProgress = computed(() => {
-    const p = scrollProgress.value
-    if (p < 0.5) return 0
-    if (p > 1.0) return 1
-    return (p - 0.5) * 2
-  })
-
   // --- Animation Loop ---
   function tick() {
     const diff = targetProgress - scrollProgress.value
@@ -138,6 +118,7 @@ export function useScrollTransition(options: ScrollOptions = {}) {
   
   /**
    * Creates a computed value (0 to 1) for a specific phase of the scroll.
+   * Usage: const heroZoom = createPhase(0, 0.5)
    */
   function createPhase(start: number, end: number): ComputedRef<number> {
     return computed(() => {
@@ -209,12 +190,6 @@ export function useScrollTransition(options: ScrollOptions = {}) {
     maxScroll,
     setMaxScroll,
     createPhase,
-    // Legacy computed phases
-    isFrozen,
-    zoomProgress,
-    cloudProgress,
-    aboutProgress,
-    // Controls
     isMapZoomed,
     setMapZoomed,
     reset,
