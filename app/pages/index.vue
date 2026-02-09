@@ -24,16 +24,16 @@ const {
 } = useScrollTransition({
     initialMaxScroll: 2.0,
     pins: [
-        { position: 1.0, duration: 1000 } // Brief pause at About section complete
+        { position: 1.0, duration: 500 } // Brief pause at About section complete
     ]
 })
 
-// --- 2. DEFINE SECTION PHASES (All dynamic via createPhase!) ---
+// --- 2. DEFINE SECTION PHASES (All return { progress, style }) ---
 // Hero + About fixed animations (0 to 1.0)
 const isFrozen = computed(() => scrollProgress.value > 0.05)
-const zoomProgress = createPhase(0, 0.5)        // 0 → 0.5 = Hero zoom
-const cloudProgress = createPhase(0.15, 0.7)    // 0.15 → 0.7 = Cloud overlay
-const aboutProgress = createPhase(0.5, 1.0)     // 0.5 → 1.0 = About section enters
+const heroPhase = createPhase(0, 0.5, { direction: 'none' })      // 0 → 0.5 = Hero zoom
+const cloudPhase = createPhase(0.15, 1.0, { direction: 'none' })  // 0.15 → 1.0 = Cloud overlay
+const aboutPhase = createPhase(0.5, 1.0, { direction: 'up' })     // 0.5 → 1.0 = About section
 
 // About section scrolls OUT as CityHead comes in (continues past 1.0)
 // Standard: 1.0 virtual unit = 100dvh (same as useScrollableSection)
@@ -67,8 +67,11 @@ watch(cityHeadLength, () => {
     setMaxScroll(total)
 }, { immediate: true })
 
-// Scroll indicator percentage
-const scrollPercentage = createPhase(0, 1.0)
+// Scroll indicator using progress
+const scrollIndicatorProgress = computed(() => {
+    const maxVal = 1.0 + cityHeadLength.value
+    return Math.min(1, scrollProgress.value / maxVal)
+})
 </script>
 
 <template>
@@ -80,17 +83,17 @@ const scrollPercentage = createPhase(0, 1.0)
         <!-- Fixed Layer: Hero + About (animated by scroll progress) -->
         <div class="fixed-layer">
             <!-- Hero Section -->
-            <HeroSection :frozen="isFrozen" :zoom-progress="zoomProgress" :hidden="aboutProgress > 0.9"
-                @zoom-change="handleMapZoomChange" />
+            <HeroSection :frozen="isFrozen" :zoom-progress="heroPhase.progress.value"
+                :hidden="aboutPhase.progress.value > 0.9" @zoom-change="handleMapZoomChange" />
 
             <!-- Cloud Overlay - appears during scroll -->
             <ClientOnly>
-                <CloudOverlay :progress="cloudProgress" :about-progress="aboutProgress" />
+                <CloudOverlay :progress="cloudPhase.progress.value" :about-progress="aboutPhase.progress.value" />
             </ClientOnly>
 
             <!-- About Section - slides up and then scrolls out -->
             <ClientOnly>
-                <AboutSection :progress="aboutProgress" :scroll-out="aboutScrollOut"
+                <AboutSection :progress="aboutPhase.progress.value" :scroll-out="aboutScrollOut"
                     background-image="https://uzbekistan.travel/storage/app/media/uploaded-files/samarkand-uzbekistan-kupol-mechet-ploshchad.png" />
             </ClientOnly>
         </div>
@@ -103,12 +106,12 @@ const scrollPercentage = createPhase(0, 1.0)
         <!-- Visual Scroll Indicator -->
         <div class="scroll-indicator">
             <div class="scroll-track">
-                <div class="scroll-thumb" :style="{ height: `${Math.max(20, scrollPercentage * 100)}%` }" />
+                <div class="scroll-thumb" :style="{ height: `${Math.max(20, scrollIndicatorProgress * 100)}%` }" />
             </div>
         </div>
 
         <!-- Debug (remove in production) -->
-        <div class="debug">{{ scrollProgress.toFixed(2) }} / {{ (CITYHEAD_START + cityHeadLength).toFixed(2) }}</div>
+        <div class="debug">{{ scrollProgress.toFixed(2) }} / {{ (cityHeadLength).toFixed(2) }}</div>
     </div>
 </template>
 
@@ -136,7 +139,6 @@ const scrollPercentage = createPhase(0, 1.0)
     top: 100dvh;
     left: 0;
     width: 100%;
-    min-height: 100dvh;
     z-index: 10;
 }
 

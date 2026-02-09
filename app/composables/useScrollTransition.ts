@@ -22,7 +22,7 @@ export function useScrollTransition(options: ScrollOptions = {}) {
   // Physics Constants
   const DAMPING = 0.05
   const SENSITIVITY_WHEEL = 0.0005
-  const SENSITIVITY_TOUCH = 0.001
+  const SENSITIVITY_TOUCH = 0.002
 
   // --- State ---
   const scrollProgress = ref(0)
@@ -115,18 +115,72 @@ export function useScrollTransition(options: ScrollOptions = {}) {
   }
 
   // --- Helpers ---
-  
+
+  interface PhaseOptions {
+    /** Direction of movement: 'up' slides from bottom to top, 'down' slides from top to bottom */
+    direction?: 'up' | 'down' | 'none'
+  }
+
+  interface PhaseResult {
+    /** Progress value from 0 to 1 */
+    progress: ComputedRef<number>
+    /** Style object with transform (1.0 = 100vh movement) */
+    style: ComputedRef<Record<string, string>>
+    /** Whether this phase is currently active (progress > 0 and < 1) */
+    isActive: ComputedRef<boolean>
+    /** Whether this phase is complete (progress >= 1) */
+    isComplete: ComputedRef<boolean>
+  }
+
   /**
-   * Creates a computed value (0 to 1) for a specific phase of the scroll.
-   * Usage: const heroZoom = createPhase(0, 0.5)
+   * Creates computed values for a specific phase of the scroll.
+   * Returns both progress (0-1) and style (with translateY transform).
+   * 
+   * Usage: 
+   * const hero = createPhase(0, 0.5, { direction: 'none' })
+   * const about = createPhase(0.5, 1.0, { direction: 'up' })
+   * 
+   * In template: :style="about.style.value"
    */
-  function createPhase(start: number, end: number): ComputedRef<number> {
-    return computed(() => {
+  function createPhase(start: number, end: number, options: PhaseOptions = {}): PhaseResult {
+    const { direction = 'up' } = options
+
+    const progress = computed(() => {
       const p = scrollProgress.value
       if (p < start) return 0
       if (p > end) return 1
       return (p - start) / (end - start)
     })
+
+    const style = computed(() => {
+      const p = progress.value
+      
+      if (direction === 'none') {
+        return {
+          opacity: String(p),
+          transform: 'none',
+          visibility: 'visible' as const,
+          willChange: 'opacity'
+        }
+      }
+      
+      // 'up' = starts at 100vh below, moves to 0
+      // 'down' = starts at -100vh above, moves to 0
+      const startY = direction === 'up' ? 100 : -100
+      const translateY = startY - (p * Math.abs(startY))
+      
+      return {
+        opacity: '1',
+        transform: `translate3d(0, ${translateY}vh, 0)`,
+        visibility: (p > 0.001 ? 'visible' : 'hidden') as 'visible' | 'hidden',
+        willChange: 'transform'
+      }
+    })
+
+    const isActive = computed(() => progress.value > 0 && progress.value < 1)
+    const isComplete = computed(() => progress.value >= 1)
+
+    return { progress, style, isActive, isComplete }
   }
 
   function setMaxScroll(val: number) {
