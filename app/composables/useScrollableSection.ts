@@ -3,49 +3,51 @@ import { ref, computed, onMounted, onUnmounted, type Ref } from 'vue'
 interface UseScrollableSectionOptions {
   scrollProgress: Ref<number>
   startAt: number | Ref<number>
-  sensitivity?: number // 0.001 means 1000px = 1.0 virtual unit
 }
 
 /**
- * AUTOMATIC SECTION HANDLER
- * 1. Measures the DOM element's real height.
- * 2. Calculates how much "virtual" scroll space it needs.
- * 3. Applies the CSS transform to move it based on scroll.
+ * VIEWPORT-NORMALIZED SECTION HANDLER
  * 
- * Virtual scroll space = content height (to bring it fully into view and scroll through it)
+ * Standard: 1.0 virtual unit = 100vh (100% viewport height)
+ * 
+ * 1. Measures the DOM element's real height
+ * 2. Calculates virtualLength as height/viewport (how many "screens" tall)
+ * 3. Outputs translateY in vh units for device-independent scrolling
  */
 export function useScrollableSection(options: UseScrollableSectionOptions) {
-  const { scrollProgress, startAt, sensitivity = 0.001 } = options
+  const { scrollProgress, startAt } = options
   
   const elementRef = ref<HTMLElement | null>(null)
-  const virtualLength = ref(0)
+  const virtualLength = ref(0) // How many "screens" (100vh) this section spans
 
   const startValue = computed(() => (typeof startAt === 'number' ? startAt : startAt.value))
 
-  // Calculate CSS Transform
+  // Calculate translateY in vh units
+  // 1.0 virtual unit = 100vh of movement
   const translateY = computed(() => {
     if (scrollProgress.value < startValue.value) return 0
     
     const progressInSection = scrollProgress.value - startValue.value
-    // Convert virtual units → pixels
-    return -(progressInSection / sensitivity)
+    // Convert: 1.0 progress = -100vh
+    return -(progressInSection * 100) // in vh units
   })
 
-  // Style object to bind to element
+  // Style object with vh-based transform
   const sectionStyle = computed(() => ({
-    transform: `translate3d(0, ${translateY.value}px, 0)`,
+    transform: `translate3d(0, ${translateY.value}vh, 0)`,
     willChange: 'transform'
   }))
 
-  // Measure content height and calculate virtual scroll length
+  // Measure content height and calculate virtualLength
   function updateHeight() {
-    if (!elementRef.value) return
+    if (!elementRef.value || typeof window === 'undefined') return
     
     const realHeight = elementRef.value.scrollHeight
+    const viewportHeight = window.innerHeight
     
-    // Virtual length = full content height (we need to scroll it all the way through)
-    // This allows the section to be fully revealed and scrolled past
-    virtualLength.value = realHeight * sensitivity
+    // How many "screens" does this content span?
+    // e.g., 200vh content = 2.0 virtualLength
+    virtualLength.value = realHeight / viewportHeight
   }
 
   let resizeObserver: ResizeObserver | null = null
@@ -68,6 +70,7 @@ export function useScrollableSection(options: UseScrollableSectionOptions) {
   return {
     elementRef,
     sectionStyle,
-    virtualLength
+    virtualLength,
+    translateY // Expose for debugging
   }
 }

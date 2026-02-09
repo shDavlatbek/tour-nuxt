@@ -36,15 +36,11 @@ const cloudProgress = createPhase(0.15, 0.7)    // 0.15 → 0.7 = Cloud overlay
 const aboutProgress = createPhase(0.5, 1.0)     // 0.5 → 1.0 = About section enters
 
 // About section scrolls OUT as CityHead comes in (continues past 1.0)
-// Use same speed as CityHead: sensitivity 0.001 means 1.0 unit = 1000px
-// For percentage-based movement: 1.0 unit = 100% of viewport
-// Since CityHead moves at 1000px per 1.0 unit, About should move at ~100vh per 1.0 unit
+// Standard: 1.0 virtual unit = 100vh (same as useScrollableSection)
 const aboutScrollOut = computed(() => {
     if (scrollProgress.value <= 1.0) return 0
-    // After 1.0, scroll About up at same speed as CityHead
-    // 1.0 virtual unit = 100% viewport movement to match
-    const progressPastAbout = scrollProgress.value - 1.0
-    return progressPastAbout * (1000 / window.innerHeight) * 100 // convert to percentage matching pixel speed
+    // 1.0 virtual unit = 100vh of movement
+    return (scrollProgress.value - 1.0) * 100 // percentage of viewport
 })
 
 // Handle zoom state change from HeroSection
@@ -99,11 +95,8 @@ const scrollPercentage = createPhase(0, 1.0)
             </ClientOnly>
         </div>
 
-        <!-- Scroll Layer: CityHead (follows directly below About) -->
-        <div ref="cityHeadRef" class="scroll-layer" :style="{
-            ...cityHeadStyle,
-            top: `calc(100vh - ${aboutScrollOut}%)`
-        }">
+        <!-- Scroll Layer: CityHead (vh-based transform from useScrollableSection) -->
+        <div ref="cityHeadRef" class="scroll-layer" :style="cityHeadStyle">
             <CityHead city-name="SAMARKAND" :background-image="registanBackground" />
         </div>
 
