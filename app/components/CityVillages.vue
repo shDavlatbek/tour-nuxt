@@ -51,13 +51,13 @@ const calculateTrail = () => {
         return {
             x: rect.left + rect.width / 2 - containerRect.left,
             y: rect.top + rect.height / 2 - containerRect.top,
-            top: rect.top - containerRect.top // used for row grouping
+            top: rect.top - containerRect.top
         }
     })
 
     // Group by visual row (group items that have roughly the same Y)
     const rows: typeof points[] = []
-    const threshold = 50 // px tolerance for "same row"
+    const threshold = 50
 
     points.forEach(p => {
         const currentRow = rows[rows.length - 1]
@@ -69,40 +69,56 @@ const calculateTrail = () => {
     })
 
     // Sort rows to create the "Snake" pattern
-    // Row 0 (Top): Right -> Left (descending X)
-    // Row 1: Left -> Right (ascending X)
-    // Row 2: Right -> Left...
+    // Even rows: Right -> Left, Odd rows: Left -> Right
     const sortedPoints: typeof points = []
 
     rows.forEach((row, index) => {
         if (index % 2 === 0) {
-            // Even rows (0, 2...): Right to Left
             row.sort((a, b) => b.x - a.x)
         } else {
-            // Odd rows (1, 3...): Left to Right
             row.sort((a, b) => a.x - b.x)
         }
         sortedPoints.push(...row)
+
+        // Insert a wide curve waypoint BETWEEN rows
+        if (index < rows.length - 1) {
+            const lastInRow = row[row.length - 1]
+            const nextRow = rows[index + 1]
+            if (!lastInRow || !nextRow || nextRow.length === 0) return
+            // Sort next row to find its first card
+            const nextSorted = [...nextRow].sort((a, b) =>
+                (index + 1) % 2 === 0 ? b.x - a.x : a.x - b.x
+            )
+            const firstInNextRow = nextSorted[0]!
+
+            // Midpoint Y between rows
+            const midY = (lastInRow.y + firstInNextRow.y) / 2
+
+            // Wide curve swings to the edge:
+            // Even row ends at left → swing further left (outside container)
+            // Odd row ends at right → swing further right
+            const curveX = index % 2 === 0
+                ? -80  // Swing far left
+                : containerRect.width + 80  // Swing far right
+
+            sortedPoints.push({ x: curveX, y: midY, top: midY })
+        }
     })
 
     if (sortedPoints.length === 0) return
 
-    // Create Entry Point (Swoosh from Top-Right offscreen)
-    const first = sortedPoints[0]
+    // Entry from Top-Right offscreen
     const entryPoint = { x: containerRect.width + 100, y: -100 }
 
-    // Create Exit Point (Swoosh to Bottom offscreen)
+    // Exit to Bottom offscreen
     const last = sortedPoints[sortedPoints.length - 1]
-    // Exit direction depends on the last row's direction
     const isLastRowRightToLeft = (rows.length - 1) % 2 === 0
     const exitX = isLastRowRightToLeft ? -100 : containerRect.width + 100
     const exitPoint = { x: exitX, y: last.y + 200 }
 
-    // Combine all points
     const fullPath = [entryPoint, ...sortedPoints, exitPoint]
 
-    // Generate SVG Path Command (Cubic Bezier through points)
-    // Simple Catmull-Rom to Bezier conversion or simple smoothing
+    // Generate SVG Path with Catmull-Rom smoothing
     let d = `M ${fullPath[0].x} ${fullPath[0].y}`
 
     for (let i = 0; i < fullPath.length - 1; i++) {
@@ -111,8 +127,7 @@ const calculateTrail = () => {
         const p2 = fullPath[i + 1]
         const p3 = i < fullPath.length - 2 ? fullPath[i + 2] : fullPath[i + 1]
 
-        // Catmull-Rom Smoothing Factor
-        const tension = 0.2 // 0 to 1
+        const tension = 0.35
 
         const cp1x = p1.x + (p2.x - p0.x) * tension
         const cp1y = p1.y + (p2.y - p0.y) * tension
@@ -125,7 +140,6 @@ const calculateTrail = () => {
 
     pathData.value = d
 
-    // Update path length for dasharray animation
     nextTick(() => {
         if (svgPathRef.value) {
             pathLength.value = svgPathRef.value.getTotalLength()
