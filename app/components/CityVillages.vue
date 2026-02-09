@@ -63,46 +63,38 @@ const observerOptions = {
 const visibleVillages = ref(new Set<number>())
 let observer: IntersectionObserver | null = null
 
-// --- Scroll-Driven Trail Animation ---
+// --- Scroll-Driven Snake Trail ---
 const sectionRef = ref<HTMLElement | null>(null)
-const trailProgress = ref(0) // 0 to 1
+const trailProgress = ref(0)
 
-// The SVG path total length — will be measured on mount
-const TRAIL_PATH_LENGTH = 3200
+// Total path length for the snake trail (measured from the SVG path)
+const TRAIL_LENGTH = 4200
 
 const trailDashOffset = computed(() => {
-    return TRAIL_PATH_LENGTH * (1 - trailProgress.value)
+    return TRAIL_LENGTH * (1 - trailProgress.value)
 })
+
+let isActive = false
 
 function updateTrailProgress(): void {
     if (!sectionRef.value) return
 
     const rect = sectionRef.value.getBoundingClientRect()
-    const viewportHeight = window.innerHeight
+    const vh = window.innerHeight
 
-    // Section top enters from bottom → section bottom leaves through top
-    // Progress: 0 when section top is at viewport bottom, 1 when section bottom is at viewport top
-    const totalTravel = rect.height + viewportHeight
-    const traveled = viewportHeight - rect.top
+    // Start drawing when section enters viewport, finish when bottom reaches top
+    const totalTravel = rect.height + vh
+    const traveled = vh - rect.top
 
     const raw = traveled / totalTravel
     trailProgress.value = Math.max(0, Math.min(1, raw))
 }
 
-let rafId: number | null = null
-let isTrailActive = false
-
-function onTrailScroll(): void {
-    if (!isTrailActive) return
-    if (rafId) return
-    rafId = requestAnimationFrame(() => {
-        updateTrailProgress()
-        rafId = null
-    })
+function pollTrail(): void {
+    if (!isActive) return
+    updateTrailProgress()
+    requestAnimationFrame(pollTrail)
 }
-
-// Use MutationObserver to detect parent transform changes (virtual scroll)
-let parentObserver: MutationObserver | null = null
 
 onMounted(() => {
     // Village card observer
@@ -122,57 +114,44 @@ onMounted(() => {
         observer?.observe(el)
     })
 
-    // Trail scroll animation — listen to both scroll and RAF for virtual scroll
-    isTrailActive = true
-
-    // Since this section is inside a virtual scroll (transform-based),
-    // we poll on every animation frame when the section could be visible
-    function pollTrail(): void {
-        if (!isTrailActive) return
-        updateTrailProgress()
-        requestAnimationFrame(pollTrail)
-    }
+    // Start trail animation polling (works with virtual scroll transforms)
+    isActive = true
     pollTrail()
 })
 
 onUnmounted(() => {
     observer?.disconnect()
-    parentObserver?.disconnect()
-    isTrailActive = false
-    if (rafId) cancelAnimationFrame(rafId)
+    isActive = false
 })
 </script>
 
 <template>
     <section ref="sectionRef" class="villages-section">
-        <!-- Decorative Dash Trail SVG -->
-        <svg class="trail-svg" viewBox="0 0 1400 1600" preserveAspectRatio="none" fill="none"
+        <!-- Snake Trail SVG — sits BEHIND the cards -->
+        <svg class="trail-svg" viewBox="0 0 1400 1400" preserveAspectRatio="xMidYMid slice" fill="none"
             xmlns="http://www.w3.org/2000/svg">
-            <!-- Main flowing trail path - from top-right, sweeping down-left, curving around content -->
+            <!--
+                Snake path: enters from top-right, sweeps LEFT across row 1,
+                then curves down and sweeps RIGHT across row 2, exits bottom-right.
+                Like a cartoon motion trail / swoosh.
+            -->
             <path class="trail-path" :style="{ strokeDashoffset: trailDashOffset }" d="
-                M 1350 -20
-                C 1320 60, 1280 120, 1300 200
-                C 1320 280, 1380 320, 1340 420
-                C 1300 520, 1200 480, 1250 560
-                C 1300 640, 1380 620, 1350 720
-                C 1320 820, 1240 780, 1280 860
-                C 1320 940, 1400 920, 1360 1020
-                C 1320 1120, 1220 1080, 1260 1160
-                C 1300 1240, 1380 1220, 1340 1320
-                C 1300 1420, 1200 1400, 1240 1500
-                C 1280 1600, 1360 1580, 1320 1620
-            " />
-
-            <!-- Left side trail - flowing down the left edge -->
-            <path class="trail-path trail-path--left" :style="{ strokeDashoffset: trailDashOffset * 0.85 }" d="
-                M 50 200
-                C 80 280, 20 340, 60 420
-                C 100 500, 40 540, 80 620
-                C 120 700, 30 740, 70 820
-                C 110 900, 20 940, 60 1020
-                C 100 1100, 40 1140, 80 1220
-                C 120 1300, 30 1340, 70 1420
-                C 110 1500, 50 1560, 80 1620
+                M 1450 -40
+                Q 1380 30, 1300 80
+                C 1200 140, 1100 100, 1000 130
+                C 850 170, 750 220, 600 200
+                C 450 175, 300 250, 180 300
+                C 80 340, 30 400, 60 480
+                C 90 560, 200 550, 350 570
+                C 500 590, 700 620, 900 650
+                C 1050 670, 1200 720, 1300 780
+                C 1400 840, 1380 920, 1300 970
+                C 1200 1030, 1050 1010, 900 1020
+                C 700 1035, 500 1060, 350 1100
+                C 200 1140, 80 1200, 50 1280
+                C 20 1360, 100 1420, 250 1440
+                C 400 1460, 600 1450, 800 1470
+                C 1000 1490, 1200 1520, 1450 1560
             " />
         </svg>
 
@@ -217,32 +196,27 @@ onUnmounted(() => {
     overflow: hidden;
 }
 
-/* ===== Trail SVG ===== */
+/* ===== Snake Trail SVG — behind everything ===== */
 .trail-svg {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     pointer-events: none;
-    z-index: 1;
+    z-index: 0;
 }
 
 .trail-path {
     stroke: #c85a2a;
-    stroke-width: 8;
+    stroke-width: 9;
     stroke-linecap: round;
-    stroke-dasharray: 20 30;
-    stroke-dashoffset: 3200;
+    stroke-linejoin: round;
+    /* Dashed stroke for cartoon "swoosh" effect */
+    stroke-dasharray: 24 32;
+    stroke-dashoffset: 4200;
     fill: none;
-    opacity: 0.75;
-    filter: url(#brush);
-    transition: stroke-dashoffset 0.08s linear;
-}
-
-.trail-path--left {
-    stroke-width: 7;
-    stroke-dasharray: 16 36;
-    opacity: 0.65;
+    opacity: 0.7;
+    transition: stroke-dashoffset 0.06s linear;
 }
 
 /* ===== Header ===== */
@@ -387,7 +361,7 @@ onUnmounted(() => {
     margin: 0;
 }
 
-/* ===== Mobile: hide trails for performance ===== */
+/* ===== Hide trail on mobile ===== */
 @media (max-width: 767px) {
     .trail-svg {
         display: none;
