@@ -52,16 +52,53 @@ function handleWheelAtTop(e: WheelEvent) {
     }
 }
 
+// Touch tracking for mobile
+let touchStartY = 0
+let touchTriggered = false
+
+function handleTouchStartAtTop(e: TouchEvent) {
+    if (!isNativeScrollEnabled.value) return
+    touchStartY = e.touches[0]!.clientY
+    touchTriggered = false
+}
+
+function handleTouchMoveAtTop(e: TouchEvent) {
+    if (!isNativeScrollEnabled.value || touchTriggered) return
+
+    const scrollTop = window.scrollY || document.documentElement.scrollTop
+    const touchCurrentY = e.touches[0]!.clientY
+    const deltaY = touchCurrentY - touchStartY // Positive = pulling down
+
+    // If at top and pulling down (swipe down gesture)
+    if (scrollTop <= 0 && deltaY > 50) {
+        touchTriggered = true
+        returnToAbout()
+    }
+}
+
+function handleTouchEndAtTop() {
+    touchStartY = 0
+    touchTriggered = false
+}
+
 onMounted(() => {
     if (typeof window === 'undefined') return
     window.addEventListener('scroll', handleNativeScroll, { passive: true })
     window.addEventListener('wheel', handleWheelAtTop, { passive: false })
+    // Mobile touch support
+    window.addEventListener('touchstart', handleTouchStartAtTop, { passive: true })
+    window.addEventListener('touchmove', handleTouchMoveAtTop, { passive: true })
+    window.addEventListener('touchend', handleTouchEndAtTop, { passive: true })
 })
 
 onUnmounted(() => {
     if (typeof window === 'undefined') return
     window.removeEventListener('scroll', handleNativeScroll)
     window.removeEventListener('wheel', handleWheelAtTop)
+    // Mobile touch support
+    window.removeEventListener('touchstart', handleTouchStartAtTop)
+    window.removeEventListener('touchmove', handleTouchMoveAtTop)
+    window.removeEventListener('touchend', handleTouchEndAtTop)
 })
 
 // When switching to native scroll, scroll to top
