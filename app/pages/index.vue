@@ -24,7 +24,7 @@ const {
 } = useScrollTransition({
     initialMaxScroll: 2.0,
     pins: [
-        { position: 1.0, duration: 500 } // Brief pause at About section complete
+        { position: 1.0, duration: 2000 } // Brief pause at About section complete
     ]
 })
 
@@ -99,8 +99,11 @@ const scrollPercentage = createPhase(0, 1.0)
             </ClientOnly>
         </div>
 
-        <!-- Scroll Layer: CityHead (transform-based movement) -->
-        <div ref="cityHeadRef" class="scroll-layer" :style="cityHeadStyle">
+        <!-- Scroll Layer: CityHead (follows directly below About) -->
+        <div ref="cityHeadRef" class="scroll-layer" :style="{
+            ...cityHeadStyle,
+            top: `calc(100vh - ${aboutScrollOut}%)`
+        }">
             <CityHead city-name="SAMARKAND" :background-image="registanBackground" />
         </div>
 
