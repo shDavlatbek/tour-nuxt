@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
+
 interface Village {
     id: number
     title: string
@@ -51,6 +53,40 @@ const villages: Village[] = [
         delay: '500ms'
     }
 ]
+
+// Intersection Observer Logic
+const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+}
+
+const visibleVillages = ref(new Set<number>())
+
+let observer: IntersectionObserver | null = null
+
+onMounted(() => {
+    observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                const id = Number((entry.target as HTMLElement).dataset.id)
+                if (!isNaN(id)) {
+                    visibleVillages.value.add(id)
+                    // Once visible, we can stop observing if we want the animation to only happen once
+                    observer?.unobserve(entry.target)
+                }
+            }
+        })
+    }, observerOptions)
+
+    // Observe all village cards
+    document.querySelectorAll('.village-card').forEach((el) => {
+        observer?.observe(el)
+    })
+})
+
+onUnmounted(() => {
+    observer?.disconnect()
+})
 </script>
 
 <template>
@@ -69,7 +105,8 @@ const villages: Village[] = [
         <!-- Grid -->
         <div class="villages-grid">
             <article v-for="village in villages" :key="village.id" class="village-card"
-                :style="{ animationDelay: village.delay }">
+                :class="{ 'is-visible': visibleVillages.has(village.id) }" :data-id="village.id"
+                :style="{ transitionDelay: village.delay }">
                 <div class="card-image-wrapper">
                     <img :src="village.image" :alt="village.title" class="card-image" loading="lazy" />
                     <div class="card-border"></div>
@@ -147,6 +184,7 @@ const villages: Village[] = [
     gap: 4rem;
     max-width: 1400px;
     margin: 0 auto;
+    align-items: stretch;
 }
 
 @media (min-width: 768px) {
@@ -167,14 +205,22 @@ const villages: Village[] = [
     flex-direction: column;
     align-items: center;
     opacity: 0;
-    animation: fadeInUp 0.8s ease-out forwards;
+    transform: translateY(50px);
+    transition: opacity 1s ease-out, transform 1s cubic-bezier(0.215, 0.61, 0.355, 1);
+}
+
+.village-card.is-visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 
 .card-image-wrapper {
     position: relative;
     width: 100%;
-    aspect-ratio: 4/5;
-    background-color: #ddd;
+    /* Enforce consistent height via aspect ratio */
+    aspect-ratio: 3/4;
+    max-width: 400px;
+    /* Prevent overly large images on wide screens */
     margin-bottom: 1.5rem;
     padding: 1rem;
     /* Space for the border effect */
@@ -227,17 +273,5 @@ const villages: Village[] = [
     font-size: 0.9rem;
     color: #8c8c8c;
     margin: 0;
-}
-
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
 }
 </style>
