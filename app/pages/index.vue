@@ -36,11 +36,15 @@ const cloudProgress = createPhase(0.15, 0.7)    // 0.15 → 0.7 = Cloud overlay
 const aboutProgress = createPhase(0.5, 1.0)     // 0.5 → 1.0 = About section enters
 
 // About section scrolls OUT as CityHead comes in (continues past 1.0)
-// This makes About scroll up while CityHead scrolls up behind it
+// Use same speed as CityHead: sensitivity 0.001 means 1.0 unit = 1000px
+// For percentage-based movement: 1.0 unit = 100% of viewport
+// Since CityHead moves at 1000px per 1.0 unit, About should move at ~100vh per 1.0 unit
 const aboutScrollOut = computed(() => {
     if (scrollProgress.value <= 1.0) return 0
-    // After 1.0, start scrolling About section up (out of view)
-    return (scrollProgress.value - 1.0) * 100 // percentage to scroll up
+    // After 1.0, scroll About up at same speed as CityHead
+    // 1.0 virtual unit = 100% viewport movement to match
+    const progressPastAbout = scrollProgress.value - 1.0
+    return progressPastAbout * (1000 / window.innerHeight) * 100 // convert to percentage matching pixel speed
 })
 
 // Handle zoom state change from HeroSection
