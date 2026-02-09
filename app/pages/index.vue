@@ -107,9 +107,51 @@ watch(isNativeScrollEnabled, (enabled) => {
         // Small delay to let DOM update
         setTimeout(() => {
             window.scrollTo(0, 0)
+            initSmoothScroll()
         }, 50)
+    } else {
+        stopSmoothScroll()
     }
 })
+
+// --- Smooth Scroll for Native Mode ---
+const nativeScrollRef = ref<HTMLElement | null>(null)
+const jsScrollRef = ref<HTMLElement | null>(null)
+
+let smoothScrollOffset = 0
+let smoothScrollRaf: number | null = null
+const SMOOTH_SCROLL_SPEED = 0.08
+
+function initSmoothScroll() {
+    if (!jsScrollRef.value) return
+
+    // Set body height to content height for native scrollbar
+    const height = jsScrollRef.value.getBoundingClientRect().height
+    document.body.style.height = `${Math.floor(height)}px`
+
+    smoothScrollOffset = 0
+    smoothScrollTick()
+}
+
+function smoothScrollTick() {
+    if (!jsScrollRef.value) return
+
+    smoothScrollOffset += (window.scrollY - smoothScrollOffset) * SMOOTH_SCROLL_SPEED
+    jsScrollRef.value.style.transform = `translateY(-${smoothScrollOffset}px) translateZ(0)`
+
+    smoothScrollRaf = requestAnimationFrame(smoothScrollTick)
+}
+
+function stopSmoothScroll() {
+    if (smoothScrollRaf) {
+        cancelAnimationFrame(smoothScrollRaf)
+        smoothScrollRaf = null
+    }
+    // Reset body height
+    if (typeof document !== 'undefined') {
+        document.body.style.height = ''
+    }
+}
 </script>
 
 <template>
@@ -143,15 +185,17 @@ watch(isNativeScrollEnabled, (enabled) => {
     </div>
 
     <!-- Native scroll mode: normal scrollable page (stays mounted, toggles visibility) -->
-    <div class="native-scroll-page" :class="{ 'is-active': isNativeScrollEnabled }">
-        <!-- About Section at top (full height) -->
-        <section class="about-section-container">
-            <AboutSection :progress="1"
-                background-image="https://uzbekistan.travel/storage/app/media/uploaded-files/samarkand-uzbekistan-kupol-mechet-ploshchad.png" />
-        </section>
+    <div ref="nativeScrollRef" class="native-scroll-page" :class="{ 'is-active': isNativeScrollEnabled }">
+        <div ref="jsScrollRef" class="js-scroll">
+            <!-- About Section at top (full height) -->
+            <section class="about-section-container">
+                <AboutSection :progress="1"
+                    background-image="https://uzbekistan.travel/storage/app/media/uploaded-files/samarkand-uzbekistan-kupol-mechet-ploshchad.png" />
+            </section>
 
-        <!-- CityHead below About -->
-        <CityHead city-name="SAMARKAND" :background-image="registanBackground" />
+            <!-- CityHead below About -->
+            <CityHead city-name="SAMARKAND" :background-image="registanBackground" />
+        </div>
     </div>
 </template>
 
@@ -180,7 +224,12 @@ watch(isNativeScrollEnabled, (enabled) => {
 
 /* Native scroll mode - normal page flow */
 .native-scroll-page {
-    min-height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
     /* Visibility toggle - hidden by default */
     opacity: 0;
     visibility: hidden;
@@ -192,6 +241,12 @@ watch(isNativeScrollEnabled, (enabled) => {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
+}
+
+/* Smooth scroll container */
+.js-scroll {
+    position: relative;
+    will-change: transform;
 }
 
 /* ===== Custom Scrollbar Styling ===== */
