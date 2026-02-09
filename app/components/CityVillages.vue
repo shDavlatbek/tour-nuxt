@@ -63,41 +63,43 @@ const observerOptions = {
 const visibleVillages = ref(new Set<number>())
 let observer: IntersectionObserver | null = null
 
-// --- Scroll-Driven Snake Trail ---
+// --- Scroll Progress for Trail Segments ---
 const sectionRef = ref<HTMLElement | null>(null)
 const trailProgress = ref(0)
-
-// Total path length for the snake trail (measured from the SVG path)
-const TRAIL_LENGTH = 4200
-
-const trailDashOffset = computed(() => {
-    return TRAIL_LENGTH * (1 - trailProgress.value)
-})
-
 let isActive = false
 
-function updateTrailProgress(): void {
-    if (!sectionRef.value) return
+// Trail segments fade in at these thresholds
+// Order: top-right → V3 → V2 → V1 → V4 → V5 → V6 → bottom
+const segmentVisible = computed(() => {
+    const p = trailProgress.value
+    return {
+        entry: p > 0.05,      // Entry swoosh from top-right
+        toV3: p > 0.10,       // → Village 3 (top-right card)
+        toV2: p > 0.18,       // → Village 2 (top-center card)
+        toV1: p > 0.26,       // → Village 1 (top-left card)
+        toV4: p > 0.38,       // → Village 4 (bottom-left card) — crosses down
+        toV5: p > 0.48,       // → Village 5 (bottom-center card)
+        toV6: p > 0.58,       // → Village 6 (bottom-right card)
+        exit: p > 0.68,       // Exit trail going down
+    }
+})
 
+function updateProgress(): void {
+    if (!sectionRef.value) return
     const rect = sectionRef.value.getBoundingClientRect()
     const vh = window.innerHeight
-
-    // Start drawing when section enters viewport, finish when bottom reaches top
     const totalTravel = rect.height + vh
     const traveled = vh - rect.top
-
-    const raw = traveled / totalTravel
-    trailProgress.value = Math.max(0, Math.min(1, raw))
+    trailProgress.value = Math.max(0, Math.min(1, traveled / totalTravel))
 }
 
-function pollTrail(): void {
+function pollLoop(): void {
     if (!isActive) return
-    updateTrailProgress()
-    requestAnimationFrame(pollTrail)
+    updateProgress()
+    requestAnimationFrame(pollLoop)
 }
 
 onMounted(() => {
-    // Village card observer
     observer = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
             if (entry.isIntersecting) {
@@ -114,9 +116,8 @@ onMounted(() => {
         observer?.observe(el)
     })
 
-    // Start trail animation polling (works with virtual scroll transforms)
     isActive = true
-    pollTrail()
+    pollLoop()
 })
 
 onUnmounted(() => {
@@ -127,31 +128,58 @@ onUnmounted(() => {
 
 <template>
     <section ref="sectionRef" class="villages-section">
-        <!-- Snake Trail SVG — sits BEHIND the cards -->
+        <!-- Trail SVG — behind cards (z-index: 0) -->
         <svg class="trail-svg" viewBox="0 0 1400 1400" preserveAspectRatio="xMidYMid slice" fill="none"
             xmlns="http://www.w3.org/2000/svg">
-            <!--
-                Snake path: enters from top-right, sweeps LEFT across row 1,
-                then curves down and sweeps RIGHT across row 2, exits bottom-right.
-                Like a cartoon motion trail / swoosh.
-            -->
-            <path class="trail-path" :style="{ strokeDashoffset: trailDashOffset }" d="
-                M 1450 -40
-                Q 1380 30, 1300 80
-                C 1200 140, 1100 100, 1000 130
-                C 850 170, 750 220, 600 200
-                C 450 175, 300 250, 180 300
-                C 80 340, 30 400, 60 480
-                C 90 560, 200 550, 350 570
-                C 500 590, 700 620, 900 650
-                C 1050 670, 1200 720, 1300 780
-                C 1400 840, 1380 920, 1300 970
-                C 1200 1030, 1050 1010, 900 1020
-                C 700 1035, 500 1060, 350 1100
-                C 200 1140, 80 1200, 50 1280
-                C 20 1360, 100 1420, 250 1440
-                C 400 1460, 600 1450, 800 1470
-                C 1000 1490, 1200 1520, 1450 1560
+
+            <!-- Segment 1: Entry swoosh from top-right -->
+            <path class="trail-segment" :class="{ 'is-visible': segmentVisible.entry }" d="
+                M 1420 -30 C 1350 40, 1300 80, 1240 120
+                C 1180 160, 1150 170, 1120 180
+            " />
+
+            <!-- Segment 2: → to Village 3 area (top-right card) -->
+            <path class="trail-segment" :class="{ 'is-visible': segmentVisible.toV3 }" d="
+                M 1120 180 C 1080 200, 1060 240, 1080 280
+                C 1100 320, 1130 340, 1100 380
+            " />
+
+            <!-- Segment 3: Village 3 → Village 2 (right to center, row 1) -->
+            <path class="trail-segment" :class="{ 'is-visible': segmentVisible.toV2 }" d="
+                M 1100 380 C 1050 410, 950 390, 850 370
+                C 750 350, 700 360, 680 400
+            " />
+
+            <!-- Segment 4: Village 2 → Village 1 (center to left, row 1) -->
+            <path class="trail-segment" :class="{ 'is-visible': segmentVisible.toV1 }" d="
+                M 680 400 C 640 440, 550 420, 450 400
+                C 350 380, 280 400, 240 440
+                C 200 480, 180 500, 130 520
+            " />
+
+            <!-- Segment 5: Village 1 → Village 4 (crossing down to row 2 left) -->
+            <path class="trail-segment" :class="{ 'is-visible': segmentVisible.toV4 }" d="
+                M 130 520 C 80 560, 50 640, 80 720
+                C 110 800, 160 840, 200 880
+                C 240 920, 280 940, 260 980
+            " />
+
+            <!-- Segment 6: Village 4 → Village 5 (left to center, row 2) -->
+            <path class="trail-segment" :class="{ 'is-visible': segmentVisible.toV5 }" d="
+                M 260 980 C 300 1010, 420 990, 550 1000
+                C 650 1008, 700 1020, 720 1050
+            " />
+
+            <!-- Segment 7: Village 5 → Village 6 (center to right, row 2) -->
+            <path class="trail-segment" :class="{ 'is-visible': segmentVisible.toV6 }" d="
+                M 720 1050 C 760 1080, 880 1060, 1000 1070
+                C 1100 1078, 1150 1100, 1180 1140
+            " />
+
+            <!-- Segment 8: Exit trail going down-right -->
+            <path class="trail-segment" :class="{ 'is-visible': segmentVisible.exit }" d="
+                M 1180 1140 C 1220 1200, 1260 1280, 1300 1340
+                C 1340 1400, 1380 1430, 1430 1460
             " />
         </svg>
 
@@ -196,7 +224,7 @@ onUnmounted(() => {
     overflow: hidden;
 }
 
-/* ===== Snake Trail SVG — behind everything ===== */
+/* ===== Trail SVG — behind cards ===== */
 .trail-svg {
     position: absolute;
     inset: 0;
@@ -206,17 +234,20 @@ onUnmounted(() => {
     z-index: 0;
 }
 
-.trail-path {
+/* Each segment: invisible by default, fades in */
+.trail-segment {
     stroke: #c85a2a;
-    stroke-width: 9;
+    stroke-width: 8;
     stroke-linecap: round;
     stroke-linejoin: round;
-    /* Dashed stroke for cartoon "swoosh" effect */
-    stroke-dasharray: 24 32;
-    stroke-dashoffset: 4200;
+    stroke-dasharray: 20 28;
     fill: none;
-    opacity: 0.7;
-    transition: stroke-dashoffset 0.06s linear;
+    opacity: 0;
+    transition: opacity 0.8s ease-in-out;
+}
+
+.trail-segment.is-visible {
+    opacity: 0.72;
 }
 
 /* ===== Header ===== */
