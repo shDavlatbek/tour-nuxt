@@ -33,7 +33,15 @@ const {
 const isFrozen = computed(() => scrollProgress.value > 0.05)
 const zoomProgress = createPhase(0, 0.5)        // 0 → 0.5 = Hero zoom
 const cloudProgress = createPhase(0.15, 0.7)    // 0.15 → 0.7 = Cloud overlay
-const aboutProgress = createPhase(0.5, 1.0)     // 0.5 → 1.0 = About section
+const aboutProgress = createPhase(0.5, 1.0)     // 0.5 → 1.0 = About section enters
+
+// About section scrolls OUT as CityHead comes in (continues past 1.0)
+// This makes About scroll up while CityHead scrolls up behind it
+const aboutScrollOut = computed(() => {
+    if (scrollProgress.value <= 1.0) return 0
+    // After 1.0, start scrolling About section up (out of view)
+    return (scrollProgress.value - 1.0) * 100 // percentage to scroll up
+})
 
 // Handle zoom state change from HeroSection
 function handleMapZoomChange(zoomed: boolean) {
@@ -80,9 +88,9 @@ const scrollPercentage = createPhase(0, 1.0)
                 <CloudOverlay :progress="cloudProgress" :about-progress="aboutProgress" />
             </ClientOnly>
 
-            <!-- About Section - slides up -->
+            <!-- About Section - slides up and then scrolls out -->
             <ClientOnly>
-                <AboutSection :progress="aboutProgress"
+                <AboutSection :progress="aboutProgress" :scroll-out="aboutScrollOut"
                     background-image="https://uzbekistan.travel/storage/app/media/uploaded-files/samarkand-uzbekistan-kupol-mechet-ploshchad.png" />
             </ClientOnly>
         </div>

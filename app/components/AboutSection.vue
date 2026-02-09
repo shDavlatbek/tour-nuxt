@@ -3,10 +3,12 @@ import { computed } from 'vue'
 
 interface Props {
     progress: number // 0 to 1 (entry animation)
+    scrollOut?: number // percentage to scroll up (0 = none, 100 = fully off screen)
     backgroundImage?: string // URL from backend
 }
 
 const props = withDefaults(defineProps<Props>(), {
+    scrollOut: 0,
     backgroundImage: '',
 })
 
@@ -16,7 +18,10 @@ const showBackgroundImage = computed(() => props.progress > 0.8 && props.backgro
 // Transform calculation for slide-up effect
 const sectionStyle = computed(() => {
     // Start from 100% below (translateY 100%) and move to 0%
-    const translateY = 100 - props.progress * 100
+    // Then continue to negative values (scroll out the top) when scrollOut > 0
+    const entryTranslate = 100 - props.progress * 100
+    const exitTranslate = -props.scrollOut
+    const translateY = entryTranslate + exitTranslate
 
     return {
         transform: `translateY(${translateY}%)`,
