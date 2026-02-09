@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { watch, ref, onMounted, onUnmounted } from 'vue'
+import { watch } from 'vue'
 import { useSeoMeta } from 'nuxt/app'
 import { useScrollTransition } from '../composables/useScrollTransition'
+import { useScrollableSection } from '../composables/useScrollableSection'
 
 // Import image for CityHead section
 import registanBackground from '~/assets/images/registan.jpg'
@@ -14,257 +15,120 @@ useSeoMeta({
     ogType: 'website',
 })
 
-// Virtual scroll transition state (Hero → About only)
-const { scrollProgress, isFrozen, zoomProgress, cloudProgress, aboutProgress, isNativeScrollEnabled, setMapZoomed, returnToAbout, reset } = useScrollTransition()
+// --- 1. SETUP ENGINE ---
+// Initial scroll length: 1.0 for Hero+About fixed animations
+const {
+    scrollProgress,
+    setMaxScroll,
+    createPhase,
+    // Legacy computed phases
+    isFrozen,
+    zoomProgress,
+    cloudProgress,
+    aboutProgress,
+    setMapZoomed
+} = useScrollTransition({
+    initialMaxScroll: 2.0,
+    pins: [
+        { position: 1.0, duration: 500 } // Brief pause at About section complete
+    ]
+})
 
 // Handle zoom state change from HeroSection
 function handleMapZoomChange(zoomed: boolean) {
     setMapZoomed(zoomed)
 }
 
-// Track if we should return to virtual scroll
-const shouldReturnToVirtual = ref(false)
+// --- 2. DYNAMIC SECTIONS ---
 
-// Handle scroll in native mode - detect when user wants to go back
-function handleNativeScroll() {
-    if (!isNativeScrollEnabled.value) return
-
-    const scrollTop = window.scrollY || document.documentElement.scrollTop
-
-    // If at the very top and user previously scrolled, allow going back
-    if (scrollTop <= 0) {
-        shouldReturnToVirtual.value = true
-    } else {
-        shouldReturnToVirtual.value = false
-    }
-}
-
-// Handle wheel in native mode to detect scroll up at top
-function handleWheelAtTop(e: WheelEvent) {
-    if (!isNativeScrollEnabled.value) return
-
-    const scrollTop = window.scrollY || document.documentElement.scrollTop
-
-    // If at top and trying to scroll up, return to virtual scroll (About section)
-    if (scrollTop <= 0 && e.deltaY < 0) {
-        e.preventDefault()
-        returnToAbout() // Return to About section (preserves position)
-    }
-}
-
-// Touch tracking for mobile
-let touchStartY = 0
-let touchTriggered = false
-
-function handleTouchStartAtTop(e: TouchEvent) {
-    if (!isNativeScrollEnabled.value) return
-    touchStartY = e.touches[0]!.clientY
-    touchTriggered = false
-}
-
-function handleTouchMoveAtTop(e: TouchEvent) {
-    if (!isNativeScrollEnabled.value || touchTriggered) return
-
-    const scrollTop = window.scrollY || document.documentElement.scrollTop
-    const touchCurrentY = e.touches[0]!.clientY
-    const deltaY = touchCurrentY - touchStartY // Positive = pulling down
-
-    // If at top and pulling down (swipe down gesture)
-    if (scrollTop <= 0 && deltaY > 50) {
-        touchTriggered = true
-        returnToAbout()
-    }
-}
-
-function handleTouchEndAtTop() {
-    touchStartY = 0
-    touchTriggered = false
-}
-
-onMounted(() => {
-    if (typeof window === 'undefined') return
-    window.addEventListener('scroll', handleNativeScroll, { passive: true })
-    window.addEventListener('wheel', handleWheelAtTop, { passive: false })
-    // Mobile touch support
-    window.addEventListener('touchstart', handleTouchStartAtTop, { passive: true })
-    window.addEventListener('touchmove', handleTouchMoveAtTop, { passive: true })
-    window.addEventListener('touchend', handleTouchEndAtTop, { passive: true })
+// CityHead starts at 1.0 (after About section)
+const CITYHEAD_START = 1.0
+const {
+    elementRef: cityHeadRef,
+    sectionStyle: cityHeadStyle,
+    virtualLength: cityHeadLength
+} = useScrollableSection({
+    scrollProgress,
+    startAt: CITYHEAD_START
 })
 
-onUnmounted(() => {
-    if (typeof window === 'undefined') return
-    window.removeEventListener('scroll', handleNativeScroll)
-    window.removeEventListener('wheel', handleWheelAtTop)
-    // Mobile touch support
-    window.removeEventListener('touchstart', handleTouchStartAtTop)
-    window.removeEventListener('touchmove', handleTouchMoveAtTop)
-    window.removeEventListener('touchend', handleTouchEndAtTop)
-})
+// --- 3. UPDATE TOTAL SCROLL LENGTH ---
+watch(cityHeadLength, () => {
+    const total = CITYHEAD_START + cityHeadLength.value
+    setMaxScroll(total)
+}, { immediate: true })
 
-// When switching to native scroll, scroll to top
-watch(isNativeScrollEnabled, (enabled) => {
-    if (enabled && typeof window !== 'undefined') {
-        // Small delay to let DOM update
-        setTimeout(() => {
-            window.scrollTo(0, 0)
-            initSmoothScroll()
-        }, 50)
-    } else {
-        stopSmoothScroll()
-    }
-})
-
-// --- Smooth Scroll for Native Mode ---
-const nativeScrollRef = ref<HTMLElement | null>(null)
-const jsScrollRef = ref<HTMLElement | null>(null)
-
-let smoothScrollOffset = 0
-let smoothScrollRaf: number | null = null
-const SMOOTH_SCROLL_SPEED = 0.08
-
-function initSmoothScroll() {
-    if (!jsScrollRef.value) return
-
-    // Set body height to content height for native scrollbar
-    const height = jsScrollRef.value.getBoundingClientRect().height
-    document.body.style.height = `${Math.floor(height)}px`
-
-    smoothScrollOffset = 0
-    smoothScrollTick()
-}
-
-function smoothScrollTick() {
-    if (!jsScrollRef.value) return
-
-    smoothScrollOffset += (window.scrollY - smoothScrollOffset) * SMOOTH_SCROLL_SPEED
-    jsScrollRef.value.style.transform = `translateY(-${smoothScrollOffset}px) translateZ(0)`
-
-    smoothScrollRaf = requestAnimationFrame(smoothScrollTick)
-}
-
-function stopSmoothScroll() {
-    if (smoothScrollRaf) {
-        cancelAnimationFrame(smoothScrollRaf)
-        smoothScrollRaf = null
-    }
-    // Reset body height
-    if (typeof document !== 'undefined') {
-        document.body.style.height = ''
-    }
-}
+// Scroll indicator percentage (for visual feedback)
+const scrollPercentage = createPhase(0, 1.0) // First section (fixed animations)
 </script>
 
 <template>
-    <!-- Virtual scroll mode: fixed viewport (stays mounted, toggles visibility) -->
-    <div class="virtual-scroll-page" :class="{ 'is-active': !isNativeScrollEnabled }">
+    <div class="virtual-viewport">
         <!-- Texture Overlays -->
         <div class="grain-overlay" />
         <div class="vignette-overlay" />
 
-        <!-- Hero Section -->
-        <HeroSection :frozen="isFrozen" :zoom-progress="zoomProgress" :hidden="aboutProgress > 0.9"
-            @zoom-change="handleMapZoomChange" />
+        <!-- Fixed Layer: Hero + About (animated by scroll progress) -->
+        <div class="fixed-layer">
+            <!-- Hero Section -->
+            <HeroSection :frozen="isFrozen" :zoom-progress="zoomProgress" :hidden="aboutProgress > 0.9"
+                @zoom-change="handleMapZoomChange" />
 
-        <!-- Cloud Overlay - appears during scroll -->
-        <ClientOnly>
-            <CloudOverlay :progress="cloudProgress" :about-progress="aboutProgress" />
-        </ClientOnly>
+            <!-- Cloud Overlay - appears during scroll -->
+            <ClientOnly>
+                <CloudOverlay :progress="cloudProgress" :about-progress="aboutProgress" />
+            </ClientOnly>
 
-        <!-- About Section - slides up -->
-        <ClientOnly>
-            <AboutSection :progress="aboutProgress"
-                background-image="https://uzbekistan.travel/storage/app/media/uploaded-files/samarkand-uzbekistan-kupol-mechet-ploshchad.png" />
-        </ClientOnly>
+            <!-- About Section - slides up -->
+            <ClientOnly>
+                <AboutSection :progress="aboutProgress"
+                    background-image="https://uzbekistan.travel/storage/app/media/uploaded-files/samarkand-uzbekistan-kupol-mechet-ploshchad.png" />
+            </ClientOnly>
+        </div>
+
+        <!-- Scroll Layer: CityHead (transform-based movement) -->
+        <div ref="cityHeadRef" class="scroll-layer" :style="cityHeadStyle">
+            <CityHead city-name="SAMARKAND" :background-image="registanBackground" />
+        </div>
 
         <!-- Visual Scroll Indicator -->
         <div class="scroll-indicator">
             <div class="scroll-track">
-                <div class="scroll-thumb" :style="{ height: `${Math.max(20, scrollProgress * 100)}%` }" />
+                <div class="scroll-thumb" :style="{ height: `${Math.max(20, scrollPercentage * 100)}%` }" />
             </div>
         </div>
-    </div>
 
-    <!-- Native scroll mode: normal scrollable page (stays mounted, toggles visibility) -->
-    <div ref="nativeScrollRef" class="native-scroll-page" :class="{ 'is-active': isNativeScrollEnabled }">
-        <div ref="jsScrollRef" class="js-scroll">
-            <!-- About Section at top (full height) -->
-            <section class="about-section-container">
-                <AboutSection :progress="1"
-                    background-image="https://uzbekistan.travel/storage/app/media/uploaded-files/samarkand-uzbekistan-kupol-mechet-ploshchad.png" />
-            </section>
-
-            <!-- CityHead below About -->
-            <CityHead city-name="SAMARKAND" :background-image="registanBackground" />
-        </div>
+        <!-- Debug (remove in production) -->
+        <!-- <div class="debug">{{ scrollProgress.toFixed(2) }} / {{ (CITYHEAD_START + cityHeadLength).toFixed(2) }}</div> -->
     </div>
 </template>
 
 <style scoped>
-/* Virtual scroll mode - fixed viewport */
-.virtual-scroll-page {
+/* Virtual viewport - full screen fixed container */
+.virtual-viewport {
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0;
     width: 100%;
     height: 100vh;
     height: 100dvh;
     overflow: hidden;
-    /* Visibility toggle */
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
 
-.virtual-scroll-page.is-active {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
+/* Fixed layer for Hero and About animations */
+.fixed-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
 }
 
-/* Native scroll mode - normal page flow */
-.native-scroll-page {
-    position: fixed;
-    top: 0;
+/* Scroll layer - positioned below fold, moves up via transform */
+.scroll-layer {
+    position: absolute;
+    top: 100vh;
     left: 0;
     width: 100%;
-    height: 100vh;
-    overflow: hidden;
-    /* Visibility toggle - hidden by default */
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.native-scroll-page.is-active {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
-}
-
-/* Smooth scroll container */
-.js-scroll {
-    position: relative;
-    will-change: transform;
-}
-
-/* ===== Custom Scrollbar Styling ===== */
-
-
-
-/* About section container - full viewport height */
-.about-section-container {
-    position: relative;
-    height: 100vh;
-    height: 100dvh;
-}
-
-/* Override AboutSection's fixed positioning in native mode */
-.about-section-container :deep(.about-section) {
-    position: relative !important;
-    transform: none !important;
-    visibility: visible !important;
+    min-height: 100vh;
+    z-index: 10;
 }
 
 /* Visual scroll indicator */
@@ -293,25 +157,18 @@ function stopSmoothScroll() {
     min-height: 16px;
 }
 
-/* Scroll hint for returning to virtual scroll */
-.scroll-hint {
+/* Debug display */
+.debug {
     position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.7);
+    bottom: 10px;
+    right: 10px;
+    z-index: 999;
+    background: rgba(0, 0, 0, 0.8);
     color: white;
-    padding: 10px 20px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    z-index: 100;
-}
-
-.scroll-hint--visible {
-    opacity: 1;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 12px;
 }
 
 @media (max-width: 768px) {
