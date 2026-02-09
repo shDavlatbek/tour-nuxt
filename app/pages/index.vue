@@ -100,7 +100,8 @@ const scrollIndicatorProgress = computed(() => {
 
         <!-- Scroll Layer: CityHead (dvh-based transform from useScrollableSection) -->
         <div ref="cityHeadRef" class="scroll-layer" :style="cityHeadStyle">
-            <CityHead city-name="SAMARKAND" :background-image="registanBackground" />
+            <CityHead :background-image="registanBackground" />
+            <CityVillages />
         </div>
 
         <!-- Visual Scroll Indicator -->

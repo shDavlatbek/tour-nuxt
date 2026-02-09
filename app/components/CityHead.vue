@@ -5,7 +5,7 @@ interface Props {
 }
 
 withDefaults(defineProps<Props>(), {
-    cityName: 'SAMARKAND',
+    cityName: 'Explore the hidden gems of Uzbekistan',
     backgroundImage: '',
 })
 </script>
@@ -58,7 +58,7 @@ withDefaults(defineProps<Props>(), {
     z-index: 2;
     margin: 0;
     font-family: var(--font-display);
-    font-size: clamp(3rem, 15vw, 12rem);
+    font-size: clamp(1rem, 15vw, 4rem);
     font-weight: 400;
     color: #ffffff;
     letter-spacing: 0.15em;
