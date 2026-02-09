@@ -8,33 +8,33 @@ interface UseScrollableSectionOptions {
 /**
  * VIEWPORT-NORMALIZED SECTION HANDLER
  * 
- * Standard: 1.0 virtual unit = 100vh (100% viewport height)
+ * Standard: 1.0 virtual unit = 100dvh (100% viewport height)
  * 
  * 1. Measures the DOM element's real height
  * 2. Calculates virtualLength as height/viewport (how many "screens" tall)
- * 3. Outputs translateY in vh units for device-independent scrolling
+ * 3. Outputs translateY in dvh units for device-independent scrolling
  */
 export function useScrollableSection(options: UseScrollableSectionOptions) {
   const { scrollProgress, startAt } = options
   
   const elementRef = ref<HTMLElement | null>(null)
-  const virtualLength = ref(0) // How many "screens" (100vh) this section spans
+  const virtualLength = ref(0) // How many "screens" (100dvh) this section spans
 
   const startValue = computed(() => (typeof startAt === 'number' ? startAt : startAt.value))
 
-  // Calculate translateY in vh units
-  // 1.0 virtual unit = 100vh of movement
+  // Calculate translateY in dvh units
+  // 1.0 virtual unit = 100dvh of movement
   const translateY = computed(() => {
     if (scrollProgress.value < startValue.value) return 0
     
     const progressInSection = scrollProgress.value - startValue.value
-    // Convert: 1.0 progress = -100vh
-    return -(progressInSection * 100) // in vh units
+    // Convert: 1.0 progress = -100dvh
+    return -(progressInSection * 100) // in dvh units
   })
 
-  // Style object with vh-based transform
+  // Style object with dvh-based transform
   const sectionStyle = computed(() => ({
-    transform: `translate3d(0, ${translateY.value}vh, 0)`,
+    transform: `translate3d(0, ${translateY.value}dvh, 0)`,
     willChange: 'transform'
   }))
 
@@ -46,7 +46,7 @@ export function useScrollableSection(options: UseScrollableSectionOptions) {
     const viewportHeight = window.innerHeight
     
     // How many "screens" does this content span?
-    // e.g., 200vh content = 2.0 virtualLength
+    // e.g., 200dvh content = 2.0 virtualLength
     virtualLength.value = realHeight / viewportHeight
   }
 

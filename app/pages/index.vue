@@ -24,7 +24,7 @@ const {
 } = useScrollTransition({
     initialMaxScroll: 2.0,
     pins: [
-        { position: 1.0, duration: 2000 } // Brief pause at About section complete
+        { position: 1.0, duration: 1000 } // Brief pause at About section complete
     ]
 })
 
@@ -36,10 +36,10 @@ const cloudProgress = createPhase(0.15, 0.7)    // 0.15 → 0.7 = Cloud overlay
 const aboutProgress = createPhase(0.5, 1.0)     // 0.5 → 1.0 = About section enters
 
 // About section scrolls OUT as CityHead comes in (continues past 1.0)
-// Standard: 1.0 virtual unit = 100vh (same as useScrollableSection)
+// Standard: 1.0 virtual unit = 100dvh (same as useScrollableSection)
 const aboutScrollOut = computed(() => {
     if (scrollProgress.value <= 1.0) return 0
-    // 1.0 virtual unit = 100vh of movement
+    // 1.0 virtual unit = 100dvh of movement
     return (scrollProgress.value - 1.0) * 100 // percentage of viewport
 })
 
@@ -95,7 +95,7 @@ const scrollPercentage = createPhase(0, 1.0)
             </ClientOnly>
         </div>
 
-        <!-- Scroll Layer: CityHead (vh-based transform from useScrollableSection) -->
+        <!-- Scroll Layer: CityHead (dvh-based transform from useScrollableSection) -->
         <div ref="cityHeadRef" class="scroll-layer" :style="cityHeadStyle">
             <CityHead city-name="SAMARKAND" :background-image="registanBackground" />
         </div>
@@ -118,7 +118,7 @@ const scrollPercentage = createPhase(0, 1.0)
     position: fixed;
     inset: 0;
     width: 100%;
-    height: 100vh;
+    height: 100dvh;
     height: 100dvh;
     overflow: hidden;
 }
@@ -133,10 +133,10 @@ const scrollPercentage = createPhase(0, 1.0)
 /* Scroll layer - positioned below fold, moves up via transform */
 .scroll-layer {
     position: absolute;
-    top: 100vh;
+    top: 100dvh;
     left: 0;
     width: 100%;
-    min-height: 100vh;
+    min-height: 100dvh;
     z-index: 10;
 }
 

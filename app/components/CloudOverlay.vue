@@ -38,33 +38,33 @@ onMounted(() => {
   CLOUD_CONFIGS.forEach((cloud, index) => {
     // Get the specific image element
     const target = containerRef.value?.children[index]
-    
+
     if (target) {
       // 3. V4 Syntax: .add(target, params, offset)
       tl.add(target, {
-      // 1. MOVEMENT: From Edges (sx * 2) -> Center (0)
-      translateX: [
-        { to: `${cloud.sx * 2.5}vw`, duration: 0 }, // Start FAR off-screen
-        { to: '0vw', duration: 1000 } // End at center
-      ],
-      translateY: [
-        { to: `${cloud.sy * 2.5}vh`, duration: 0 },
-        { to: '0vh', duration: 1000 }
-      ],
+        // 1. MOVEMENT: From Edges (sx * 2) -> Center (0)
+        translateX: [
+          { to: `${cloud.sx * 2.5}vw`, duration: 0 }, // Start FAR off-screen
+          { to: '0vw', duration: 1000 } // End at center
+        ],
+        translateY: [
+          { to: `${cloud.sy * 2.5}dvh`, duration: 0 },
+          { to: '0dvh', duration: 1000 }
+        ],
 
-      // 2. SCALE: Start normal -> End Huge (covers screen)
-      scale: [
-        { to: cloud.s, duration: 0 },
-        { to: cloud.s * 4, duration: 1000 } // Huge zoom effect
-      ],
+        // 2. SCALE: Start normal -> End Huge (covers screen)
+        scale: [
+          { to: cloud.s, duration: 0 },
+          { to: cloud.s * 4, duration: 1000 } // Huge zoom effect
+        ],
 
-      // 3. OPACITY: Fade in smoothly at the start
-      opacity: [
-        { to: 0, duration: 0 },    // Start invisible
-        { to: 1, duration: 200 },  // Fade in by 20% progress
-        { to: 1, duration: 800 }   // Stay visible
-      ]
-    }, 0)
+        // 3. OPACITY: Fade in smoothly at the start
+        opacity: [
+          { to: 0, duration: 0 },    // Start invisible
+          { to: 1, duration: 200 },  // Fade in by 20% progress
+          { to: 1, duration: 800 }   // Stay visible
+        ]
+      }, 0)
     }
   })
 })
@@ -87,13 +87,20 @@ watch(() => props.progress, (newVal) => {
 <style scoped>
 /* Same styles as before */
 .cloud-container {
-  position: fixed; inset: 0; pointer-events: none; z-index: 50; overflow: hidden;
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  overflow: hidden;
 }
+
 .cloud-sprite {
   position: absolute;
-  top: 50%; left: 50%;
-  width: 50vw; min-width: 400px;
+  top: 50%;
+  left: 50%;
+  width: 50vw;
+  min-width: 400px;
   /* Anime.js handles the transforms, just center the origin */
-  transform: translate(-50%, -50%); 
+  transform: translate(-50%, -50%);
 }
 </style>

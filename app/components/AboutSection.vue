@@ -102,7 +102,7 @@ const isInteractive = computed(() => props.progress > 0.95)
     top: 0;
     left: 0;
     width: 100%;
-    height: 100vh;
+    height: 100dvh;
     height: 100dvh;
     background: linear-gradient(180deg, #f8f9fa 0%, #ffffff 100%);
     z-index: 60;

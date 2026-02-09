@@ -28,7 +28,7 @@ withDefaults(defineProps<Props>(), {
 .city-head {
     position: relative;
     width: 100%;
-    height: 25vh;
+    height: 25dvh;
     overflow: hidden;
     display: flex;
     align-items: center;
