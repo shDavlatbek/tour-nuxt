@@ -17,7 +17,7 @@ const villages: Village[] = [
     { id: 4, title: 'VILLAGE D', subtitle: 'Path of Ancients', image: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&q=80&w=800', delay: '300ms' },
     { id: 5, title: 'VILLAGE E', subtitle: 'Mistborn Peaks', image: 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&q=80&w=800', delay: '400ms' },
     { id: 6, title: 'VILLAGE F', subtitle: 'Verdant Grove', image: 'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?auto=format&fit=crop&q=80&w=800', delay: '500ms' },
-    { id: 7, title: 'VILLAGE G', subtitle: 'Azure Depths', image: 'https://images.unsplash.com/photo-1518098268026-4e187743369b?auto=format&fit=crop&q=80&w=800', delay: '600ms' },
+    { id: 7, title: 'VILLAGE G', subtitle: 'Azure Depths', image: 'https://images.unsplash.com/photo-1770281151839-51fcd6c94439?auto=format&fit=crop&q=80&w=800', delay: '600ms' },
     { id: 8, title: 'VILLAGE H', subtitle: 'Crimson Horizon', image: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&q=80&w=800', delay: '700ms' }
 ]
 
@@ -287,7 +287,7 @@ onUnmounted(() => {
 
 /* ... existing fonts and header styles ... */
 .villages-title {
-    font-family: serif;
+    font-family: var(--font-display);
     /* fallback */
     font-size: clamp(3rem, 8vw, 6rem);
     color: #8c6b4a;
@@ -311,6 +311,7 @@ onUnmounted(() => {
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
+    font-family: var(--font-serif);
 }
 
 .separator-line {

@@ -27,6 +27,9 @@ withDefaults(defineProps<Props>(), {
     display: block;
     padding: 109px 0 120px;
     background-color: transparent;
+    border: 10px solid #8c6b4a;
+    border-left: 5px solid #8c6b4a;
+    border-right: 5px solid #8c6b4a;
 }
 
 .city-head__bg {
@@ -47,7 +50,7 @@ withDefaults(defineProps<Props>(), {
 
 .city-head__title {
     font-size: 50px;
-    color: var(--thm-base, #d4af37);
+    color: var(--thm-base, #f5f0e6);
     font-weight: 900;
     line-height: 70px;
     text-transform: capitalize;
