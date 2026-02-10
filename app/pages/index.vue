@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { watch, computed } from 'vue'
+import { watch, computed, onMounted } from 'vue'
 import { useSeoMeta } from 'nuxt/app'
 import { useScrollTransition } from '../composables/useScrollTransition'
 import { useScrollableSection } from '../composables/useScrollableSection'
@@ -16,11 +16,14 @@ useSeoMeta({
 })
 
 // --- 1. SETUP ENGINE ---
+const SCROLL_STORAGE_KEY = 'home-scroll-progress'
+
 const {
     scrollProgress,
     setMaxScroll,
     createPhase,
-    setMapZoomed
+    setMapZoomed,
+    setProgress
 } = useScrollTransition({
     initialMaxScroll: 2.0,
     pins: [
@@ -56,6 +59,27 @@ const aboutScrollOut = computed(() => {
 function handleMapZoomChange(zoomed: boolean) {
     setMapZoomed(zoomed)
 }
+
+// --- SCROLL POSITION PERSISTENCE ---
+// Save scroll progress to sessionStorage on change
+watch(scrollProgress, (val) => {
+    if (typeof sessionStorage !== 'undefined') {
+        sessionStorage.setItem(SCROLL_STORAGE_KEY, String(val))
+    }
+})
+
+// Restore scroll progress from sessionStorage on mount
+onMounted(() => {
+    if (typeof sessionStorage !== 'undefined') {
+        const saved = sessionStorage.getItem(SCROLL_STORAGE_KEY)
+        if (saved !== null) {
+            const val = parseFloat(saved)
+            if (!isNaN(val) && val > 0) {
+                setProgress(val)
+            }
+        }
+    }
+})
 
 // --- 3. DYNAMIC SECTIONS ---
 

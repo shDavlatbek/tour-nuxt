@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nostalgie Village Gallery V2</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#8B5E3C", // Deep leather/wood brown
+              secondary: "#D4AF37", // Gold
+              "background-light": "#F5F0E6", // Parchment/Antique White
+              "background-dark": "#2C241B", // Dark wood/Deep sepia
+              "card-light": "#FEFCF5",
+              "card-dark": "#3E3226",
+              "text-light": "#4A3B2A",
+              "text-dark": "#E6DCCA",
+            },
+            fontFamily: {
+              display: ["'Cinzel Decorative'", "serif"],
+              body: ["'Cormorant Garamond'", "serif"],
+              hand: ["'Pinyon Script'", "cursive"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              'xl': '1rem',
+              '2xl': '2rem',
+            },
+            backgroundImage: {
+              'grain-light': "url('https://www.transparenttextures.com/patterns/cream-paper.png')",
+              'grain-dark': "url('https://www.transparenttextures.com/patterns/black-paper.png')",
+            }
+          },
+        },
+      };
+    </script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&amp;family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&amp;family=Pinyon+Script&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet"/>
+<style>.vintage-border {
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.1), 0 0 15px rgba(0, 0, 0, 0.1);
+    position: relative
+    }
+.vintage-border::before, .vintage-border::after {
+    content: "";
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 1px solid #D4AF37;
+    transition: all 0.3s ease
+    }
+.vintage-border::before {
+    top: -5px;
+    left: -5px;
+    border-right: none;
+    border-bottom: none
+    }
+.vintage-border::after {
+    bottom: -5px;
+    right: -5px;
+    border-left: none;
+    border-top: none
+    }
+.vintage-card:hover .vintage-border::before, .vintage-card:hover .vintage-border::after {
+    width: 100%;
+    height: 100%;
+    opacity: 0.8
+    }
+.paper-texture {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBnXbUd4Q1NxoC4Ht__vM9iUdBUoKRPdlcNC3Nc_F0wf4-wSBg8hOaIrxbMA5DiLZ65eiNGW-u06WyIo_7tx9y9fj3VSbOtVTIqaOJLokGuRS2wYG8uWz-NJ8so5FplhjOwTwddWeayfFT2ZL_zKxzRLMbThmfYxxI_mq8h4zYVC1Qqqmr0c1k2zmso4cmQsVC9te-RXtFMTsgC61u-D5FpeKik8WaQiQIj8pBhOgRUu-8L9GCJo0agFIRohohoZjFCj7PQai1kSN4)
+    }.comment-scroll::-webkit-scrollbar {
+    display: none;
+}
+.comment-scroll {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark font-body min-h-screen transition-colors duration-300">
+<nav class="fixed top-0 w-full z-50 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm border-b border-primary/20 dark:border-primary/40 py-4">
+<div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
+<div class="flex flex-col space-y-1 cursor-pointer group">
+<span class="block w-8 h-0.5 bg-primary group-hover:w-10 transition-all duration-300"></span>
+<span class="block w-6 h-0.5 bg-primary group-hover:w-8 transition-all duration-300"></span>
+<span class="block w-4 h-0.5 bg-primary group-hover:w-6 transition-all duration-300"></span>
+</div>
+<div class="text-center">
+<h1 class="font-display text-2xl tracking-widest text-primary font-bold">NOSTALGIE</h1>
+<p class="text-xs tracking-[0.3em] uppercase text-text-light/60 dark:text-text-dark/60 mt-1">Village Chronicles</p>
+</div>
+<div class="flex items-center space-x-6">
+<button class="text-primary hover:text-secondary transition-colors">
+<span class="material-icons-outlined">search</span>
+</button>
+<div class="hidden md:flex items-center space-x-2 text-sm uppercase tracking-widest border border-primary/30 px-3 py-1 rounded-full cursor-pointer hover:bg-primary/5 transition-colors">
+<span>Map</span>
+<span class="material-icons-outlined text-base">north_east</span>
+</div>
+</div>
+</div>
+</nav>
+<main class="pt-24 pb-20 px-4 md:px-8 max-w-7xl mx-auto">
+<header class="text-center py-12 md:py-20 relative">
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-gradient-to-r from-transparent via-secondary/10 to-transparent blur-3xl -z-10 rounded-full"></div>
+<h2 class="font-display text-5xl md:text-7xl lg:text-8xl text-primary mb-4 relative inline-block">
+                Samarkand
+                <span class="absolute -top-6 -right-8 text-4xl text-secondary animate-pulse opacity-70">✦</span>
+</h2>
+<p class="font-hand text-2xl md:text-3xl text-text-light/80 dark:text-text-dark/80 max-w-2xl mx-auto mt-4 leading-relaxed">
+                "Echoes of a forgotten era, where the stones whisper tales of old and the wind carries the scent of history."
+            </p>
+<div class="mt-12 flex justify-center">
+<span class="h-16 w-[1px] bg-gradient-to-b from-primary to-transparent"></span>
+</div>
+</header>
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12 md:gap-16 mt-8">
+<article class="vintage-card group cursor-pointer flex flex-col items-center">
+<div class="relative p-3 bg-card-light dark:bg-card-dark vintage-border shadow-xl transform group-hover:-translate-y-2 transition-transform duration-500 w-full aspect-[4/5] flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0 border-[1px] border-secondary/30 m-2 z-10 pointer-events-none"></div>
+<div class="w-full h-full overflow-hidden relative">
+<img alt="Sunlight filtering through vibrant green maple leaves" class="w-full h-full object-cover filter sepia-[0.3] contrast-[1.1] group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBd35XH7wqwxflpWu438ko-1U9wITTzy2-0XijpE6pTnQX_p4th6uM77yOq0ktoOAqqQXvnEIIUYgJHbRvPrIwmr2Bh82DNHpOJ4oaoHZ1LOP-oSfHh7gbqwYK1uv14Ow49G2UvsrOQDcRQpIXOhtDPP6lZxMKWkfYVil0IW2f-QxfrX29S41MADp2mRD1ib_V4AE0wlox7DhcYKK23oAXwdHBeT-P0RkaCGl9ArHEKT3ZnyEQLyADA6xajRq2580kv7CjgFXs3JtQ"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+</div>
+</div>
+<div class="mt-8 text-center relative">
+<div class="w-8 h-[1px] bg-secondary mx-auto mb-3"></div>
+<h3 class="font-display text-2xl text-text-light dark:text-text-dark tracking-wide">Village A</h3>
+<p class="font-body italic text-text-light/60 dark:text-text-dark/60 mt-1">The Golden Canopy</p>
+</div>
+</article>
+<article class="vintage-card group cursor-pointer flex flex-col items-center md:mt-16">
+<div class="relative p-3 bg-card-light dark:bg-card-dark vintage-border shadow-xl transform group-hover:-translate-y-2 transition-transform duration-500 w-full aspect-[4/5] flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0 border-[1px] border-secondary/30 m-2 z-10 pointer-events-none"></div>
+<div class="w-full h-full overflow-hidden relative">
+<img alt="Majestic waterfall cascading down mossy cliffs" class="w-full h-full object-cover filter sepia-[0.2] contrast-[1.05] group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0w7Xetke6i3JxFYlPRh4vp-dixXQ8Oq_YVgdM0f9que-eXY-IRib0NwivxHLETq2Y-MPmJAB3HWM9UOaA_73mJgoMV0ijPprN_6EHOukReh_Md3Kv9kIcLBZBcxEh5WMqTDNV0Y--jh4VUPbcEyUeAX5UvELpHP1lrrlcpgAYrFqM8PmXFjvzPRO3kJIOEeRqtOBBZhMYiHNL09dKJ7p7avbG6MWky1g348i8Zd4doq_JnSaIGEswRdvFr0MZNU2NbWukwPgZ9Vs"/>
+</div>
+</div>
+<div class="mt-8 text-center relative">
+<div class="w-8 h-[1px] bg-secondary mx-auto mb-3"></div>
+<h3 class="font-display text-2xl text-text-light dark:text-text-dark tracking-wide">Village B</h3>
+<p class="font-body italic text-text-light/60 dark:text-text-dark/60 mt-1">Cascades of Silence</p>
+</div>
+</article>
+<article class="vintage-card group cursor-pointer flex flex-col items-center">
+<div class="relative p-3 bg-card-light dark:bg-card-dark vintage-border shadow-xl transform group-hover:-translate-y-2 transition-transform duration-500 w-full aspect-[4/5] flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0 border-[1px] border-secondary/30 m-2 z-10 pointer-events-none"></div>
+<div class="w-full h-full overflow-hidden relative">
+<img alt="Close up of fern leaf in dark forest" class="w-full h-full object-cover filter sepia-[0.4] brightness-90 group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdEBV6EpoJJdebelwotzPt4Kw715Yb_UtIIx6N_QJ-3NmzbqzZCiPvYRKwnKLZY5I9YbEmIxcUONF0-7AmT17zV31DKG9ocil4zMvOiMg4u1JuUTxELRCIYHpJ6t4410B_yuVtz2BCH0hD1LFFmnp8Im7LUDDAUw0gQ8u8oq71s3i1U6_mb13X-ixJQq3hHSt7iZ1PZQNEbFZSK0vY6AGdgoBbLOWe1AeeT7x2-9gwfKi6K4Jz-PNGPkD1HxZDDKPdbNRwRVrH0Ac"/>
+</div>
+</div>
+<div class="mt-8 text-center relative">
+<div class="w-8 h-[1px] bg-secondary mx-auto mb-3"></div>
+<h3 class="font-display text-2xl text-text-light dark:text-text-dark tracking-wide">Village C</h3>
+<p class="font-body italic text-text-light/60 dark:text-text-dark/60 mt-1">Emerald Secrets</p>
+</div>
+</article>
+<article class="vintage-card group cursor-pointer flex flex-col items-center">
+<div class="relative p-3 bg-card-light dark:bg-card-dark vintage-border shadow-xl transform group-hover:-translate-y-2 transition-transform duration-500 w-full aspect-[4/5] flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0 border-[1px] border-secondary/30 m-2 z-10 pointer-events-none"></div>
+<div class="w-full h-full overflow-hidden relative">
+<img alt="Mystical forest path with ancient trees" class="w-full h-full object-cover filter sepia-[0.3] contrast-[1.1] group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQOQ5ZM6mJ5AfPdpJ8PTWZbWoqJKGDFerleyi77vnH0Or05SGeOOQTAb5CFQOm4DPkYqbcSqPyJlQPuEAHA6CUwkDDKC0QXf6Gi4YFE-3FKGdmAyH4v9t3sTNLe1QH4oervYBezPgJ2sOGtb1ChEHyv3ZdaNhSNv10IbCrWjEUGc8PztWQ-1vWUdbXfvlfQC_Yn57ZxFpwvZ6KkgiyftocH0_KqG3ubYaDgepctcsGDfFfAN-kfYja1o-28GlLn0SdDreD89azLvQ"/>
+</div>
+</div>
+<div class="mt-8 text-center relative">
+<div class="w-8 h-[1px] bg-secondary mx-auto mb-3"></div>
+<h3 class="font-display text-2xl text-text-light dark:text-text-dark tracking-wide">Village D</h3>
+<p class="font-body italic text-text-light/60 dark:text-text-dark/60 mt-1">Path of Ancients</p>
+</div>
+</article>
+<article class="vintage-card group cursor-pointer flex flex-col items-center md:mt-16">
+<div class="relative p-3 bg-card-light dark:bg-card-dark vintage-border shadow-xl transform group-hover:-translate-y-2 transition-transform duration-500 w-full aspect-[4/5] flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0 border-[1px] border-secondary/30 m-2 z-10 pointer-events-none"></div>
+<div class="w-full h-full overflow-hidden relative">
+<img alt="Foggy mountain landscape" class="w-full h-full object-cover filter sepia-[0.2] contrast-[1.05] group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaom4HLDJohHonbzUU2nE1DiIBcJGkiJpCNdI2IOmckU0SaxAaNJTFkmTv1zoZUVFlB9O4e4S98EWWgrCMvGH014wzZWQFGOAhtnHEIqKZxOpT3gDw0LzvQC6OBUTAlGcUfZkmvJOkybtg19bBFEC28q1s4Sahof5g0_xVi7QuewtjHghXVG4lzJ89qrA0_DSlBij7Xb2J1at1aE4OmE2fn7QAMVr9yHINhwDia35OzWQAqfrDKymL4UeK6DCX5dDEb_fZ_VLEqFA"/>
+</div>
+</div>
+<div class="mt-8 text-center relative">
+<div class="w-8 h-[1px] bg-secondary mx-auto mb-3"></div>
+<h3 class="font-display text-2xl text-text-light dark:text-text-dark tracking-wide">Village E</h3>
+<p class="font-body italic text-text-light/60 dark:text-text-dark/60 mt-1">Mistborn Peaks</p>
+</div>
+</article>
+<article class="vintage-card group cursor-pointer flex flex-col items-center">
+<div class="relative p-3 bg-card-light dark:bg-card-dark vintage-border shadow-xl transform group-hover:-translate-y-2 transition-transform duration-500 w-full aspect-[4/5] flex items-center justify-center overflow-hidden">
+<div class="absolute inset-0 border-[1px] border-secondary/30 m-2 z-10 pointer-events-none"></div>
+<div class="w-full h-full overflow-hidden relative">
+<img alt="Sunlight hitting a dense green forest floor" class="w-full h-full object-cover filter sepia-[0.4] brightness-90 group-hover:scale-105 transition-transform duration-700 ease-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAksM0H9bGV_kf-rUk_OIgaExjWYGN0moQ3y-AYv2_OND3Iyh1-DdIF5_Uzk4qxmJaagBVDZfU9fgWZjNsx7y2YRXG95B98ZRWM9qnoWURuI18CznZJaQJMzbi5UCo4byXO__2mrseG9aGyGxgNKakJBF9CNnY9WvmzXstyGy37KE1tuce76OiOzRPxOYzN9oJMxDFn_zeITk2BfRBRhTQc42XxvJ_vIyldtezc2YrTgcste2bMwKjT0x-aGPIjCrfPGWv9cNzajwM"/>
+</div>
+</div>
+<div class="mt-8 text-center relative">
+<div class="w-8 h-[1px] bg-secondary mx-auto mb-3"></div>
+<h3 class="font-display text-2xl text-text-light dark:text-text-dark tracking-wide">Village F</h3>
+<p class="font-body italic text-text-light/60 dark:text-text-dark/60 mt-1">Verdant Grove</p>
+</div>
+</article>
+</section>
+<section class="mt-32 mb-16 relative">
+<div class="text-center mb-16">
+<div class="inline-block px-6 py-2 border border-primary/20 rounded-full bg-primary/5 mb-4">
+<span class="text-xs font-bold tracking-[0.2em] uppercase text-primary">Traveler's Voices</span>
+</div>
+<h3 class="font-display text-4xl md:text-5xl text-primary mb-2">Reflections</h3>
+<p class="font-hand text-xl text-text-light/70 dark:text-text-dark/70">Whispers from those who wandered</p>
+</div>
+<div class="relative px-0 md:px-12">
+<button aria-label="Previous review" class="absolute left-0 top-1/2 -translate-y-1/2 -ml-2 md:-ml-6 z-20 w-12 h-12 rounded-full bg-card-light dark:bg-card-dark border border-secondary shadow-lg flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all duration-300 group">
+<span class="material-icons-outlined transform group-hover:-translate-x-1 transition-transform">chevron_left</span>
+</button>
+<button aria-label="Next review" class="absolute right-0 top-1/2 -translate-y-1/2 -mr-2 md:-mr-6 z-20 w-12 h-12 rounded-full bg-card-light dark:bg-card-dark border border-secondary shadow-lg flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-all duration-300 group">
+<span class="material-icons-outlined transform group-hover:translate-x-1 transition-transform">chevron_right</span>
+</button>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 comment-scroll snap-x snap-mandatory">
+<div class="vintage-border bg-card-light dark:bg-card-dark p-8 md:p-10 relative flex flex-col justify-between min-h-[400px]">
+<div class="absolute top-6 left-6 text-6xl text-secondary/20 font-display">“</div>
+<div class="relative z-10 pt-4">
+<p class="font-body text-lg md:text-xl italic leading-relaxed text-text-light/80 dark:text-text-dark/80 mb-6">
+                        "Walking through the ancient pathways felt like stepping into a living painting. The golden hour light hitting the stone walls of Samarkand is a memory I shall cherish forever. It is truly a place where time stands still."
+                    </p>
+<button class="text-xs uppercase tracking-widest font-bold text-primary hover:text-secondary transition-colors flex items-center group">
+                        Read Full Story 
+                        <span class="material-icons-outlined text-sm ml-1 transform group-hover:translate-y-0.5 transition-transform">expand_more</span>
+</button>
+</div>
+<div class="mt-8 pt-6 border-t border-primary/10 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-display font-bold text-lg">
+                        RT
+                    </div>
+<div>
+<h4 class="font-display text-lg text-primary tracking-wide">Rano Toshqodirova</h4>
+<p class="text-xs uppercase tracking-widest text-text-light/50 dark:text-text-dark/50">Explorer</p>
+</div>
+</div>
+</div>
+<div class="vintage-border bg-card-light dark:bg-card-dark p-8 md:p-10 relative flex flex-col justify-between min-h-[400px]">
+<div class="absolute top-6 left-6 text-6xl text-secondary/20 font-display">“</div>
+<div class="relative z-10 pt-4">
+<p class="font-body text-lg md:text-xl italic leading-relaxed text-text-light/80 dark:text-text-dark/80 mb-6">
+                        "The silence of the Mistborn Peaks spoke volumes. Every corner of this village holds a secret, intricately woven into the fabric of its history. An unforgettable journey into the heart of the past."
+                    </p>
+<button class="text-xs uppercase tracking-widest font-bold text-primary hover:text-secondary transition-colors flex items-center group">
+                        Read Full Story 
+                        <span class="material-icons-outlined text-sm ml-1 transform group-hover:translate-y-0.5 transition-transform">expand_more</span>
+</button>
+</div>
+<div class="mt-8 pt-6 border-t border-primary/10 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-secondary/10 border border-secondary/30 flex items-center justify-center text-secondary font-display font-bold text-lg">
+                        SD
+                    </div>
+<div>
+<h4 class="font-display text-lg text-primary tracking-wide">Sulaymanova Dildora</h4>
+<p class="text-xs uppercase tracking-widest text-text-light/50 dark:text-text-dark/50">Historian</p>
+</div>
+</div>
+</div>
+<div class="vintage-border bg-card-light dark:bg-card-dark p-8 md:p-10 relative flex flex-col justify-between min-h-[400px]">
+<div class="absolute top-6 left-6 text-6xl text-secondary/20 font-display">“</div>
+<div class="relative z-10 pt-4">
+<p class="font-body text-lg md:text-xl italic leading-relaxed text-text-light/80 dark:text-text-dark/80 mb-6">
+                        "From the verdant groves to the cascading waterfalls, the natural beauty is overwhelming. But it is the hospitality of the locals that truly warms the soul. A masterpiece of culture and nature combined."
+                    </p>
+<button class="text-xs uppercase tracking-widest font-bold text-primary hover:text-secondary transition-colors flex items-center group">
+                        Read Full Story 
+                        <span class="material-icons-outlined text-sm ml-1 transform group-hover:translate-y-0.5 transition-transform">expand_more</span>
+</button>
+</div>
+<div class="mt-8 pt-6 border-t border-primary/10 flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-primary/80 border border-primary flex items-center justify-center text-card-light font-display font-bold text-lg">
+                        AB
+                    </div>
+<div>
+<h4 class="font-display text-lg text-primary tracking-wide">Ahzam Begmatov</h4>
+<p class="text-xs uppercase tracking-widest text-text-light/50 dark:text-text-dark/50">Photographer</p>
+</div>
+</div>
+</div>
+</div>
+<div class="flex justify-center items-center gap-3 mt-12">
+<button class="w-8 h-1 bg-primary rounded-full transition-all duration-300 hover:bg-secondary"></button>
+<button class="w-2 h-2 bg-primary/30 rounded-full transition-all duration-300 hover:bg-secondary"></button>
+<button class="w-2 h-2 bg-primary/30 rounded-full transition-all duration-300 hover:bg-secondary"></button>
+<button class="w-2 h-2 bg-primary/30 rounded-full transition-all duration-300 hover:bg-secondary"></button>
+<button class="w-2 h-2 bg-primary/30 rounded-full transition-all duration-300 hover:bg-secondary"></button>
+</div>
+</div>
+</section>
+<div class="mt-32 mb-12 flex justify-center items-center opacity-60">
+<div class="h-[1px] w-24 bg-primary/40"></div>
+<div class="mx-4 text-2xl text-secondary font-display">✦</div>
+<div class="h-[1px] w-24 bg-primary/40"></div>
+</div>
+<div class="relative w-full border-t border-primary/20 pt-8 pb-12 overflow-hidden">
+<div class="flex justify-between items-end text-xs uppercase tracking-widest text-text-light/50 dark:text-text-dark/50 font-display">
+<div class="flex space-x-8">
+<span class="hover:text-primary cursor-pointer transition-colors">Les Barres</span>
+<span class="hover:text-primary cursor-pointer transition-colors">Les Oriseaux</span>
+<span class="hover:text-primary cursor-pointer transition-colors">Les Beaux Sens</span>
+<span class="hover:text-primary cursor-pointer transition-colors">Le Chemin</span>
+</div>
+<div class="flex items-center space-x-2 text-primary font-bold">
+<span>Avize</span>
+<span class="material-icons-outlined text-sm">east</span>
+</div>
+</div>
+<div class="absolute top-0 left-0 w-full h-2 flex justify-between px-2">
+<div class="w-[1px] h-full bg-primary/20"></div>
+<div class="w-[1px] h-1/2 bg-primary/10 self-start"></div>
+<div class="w-[1px] h-1/2 bg-primary/10 self-start"></div>
+<div class="w-[1px] h-full bg-primary/20"></div>
+<div class="w-[1px] h-1/2 bg-primary/10 self-start"></div>
+<div class="w-[1px] h-full bg-primary/20"></div>
+<div class="w-[1px] h-1/2 bg-primary/10 self-start"></div>
+<div class="w-[1px] h-1/2 bg-primary/10 self-start"></div>
+<div class="w-[1px] h-full bg-primary/20"></div>
+</div>
+</div>
+</main>
+</body></html>

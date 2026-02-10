@@ -23,8 +23,16 @@ const villages: Village[] = [
 
 // --- Refs for Positioning ---
 const sectionRef = ref<HTMLElement | null>(null)
-// We store card DOM elements here to calculate positions
-const cardRefs = ref<HTMLElement[]>([])
+// We store card refs here — NuxtLink components, so we extract $el
+const cardRefs = ref<any[]>([])
+
+// Helper: get DOM element from ref (handles both component instances and elements)
+function getEl(refItem: any): HTMLElement | null {
+    if (!refItem) return null
+    if (refItem.$el) return refItem.$el as HTMLElement
+    if (refItem instanceof HTMLElement) return refItem
+    return null
+}
 const pathData = ref('')
 const pathLength = ref(0)
 const svgPathRef = ref<SVGPathElement | null>(null)
@@ -46,14 +54,16 @@ const calculateTrail = () => {
     const containerRect = sectionRef.value.getBoundingClientRect()
 
     // Get centers of all cards relative to the container
-    const points = cardRefs.value.map(el => {
+    const points = cardRefs.value.map(item => {
+        const el = getEl(item)
+        if (!el) return null
         const rect = el.getBoundingClientRect()
         return {
             x: rect.left + rect.width / 2 - containerRect.left,
             y: rect.top + rect.height / 2 - containerRect.top,
             top: rect.top - containerRect.top
         }
-    })
+    }).filter(Boolean) as { x: number; y: number; top: number }[]
 
     // Group by visual row (group items that have roughly the same Y)
     const rows: typeof points[] = []
@@ -182,7 +192,10 @@ onMounted(() => {
         })
     }, observerOptions)
 
-    cardRefs.value.forEach((el) => observer?.observe(el))
+    cardRefs.value.forEach((item) => {
+        const el = getEl(item)
+        if (el) observer?.observe(el)
+    })
 
     // Initial Calculation
     isActive = true
@@ -227,9 +240,9 @@ onUnmounted(() => {
         </header>
 
         <div class="villages-grid">
-            <article v-for="(village, index) in villages" :key="village.id" ref="cardRefs" class="village-card"
-                :class="{ 'is-visible': visibleVillages.has(village.id) }" :data-id="village.id"
-                :style="{ transitionDelay: `${index * 100}ms` }">
+            <NuxtLink v-for="(village, index) in villages" :key="village.id" :to="`/villages/${village.id}`"
+                ref="cardRefs" class="village-card" :class="{ 'is-visible': visibleVillages.has(village.id) }"
+                :data-id="village.id" :style="{ transitionDelay: `${index * 100}ms` }">
                 <div class="card-image-wrapper">
                     <img :src="village.image" :alt="village.title" class="card-image" loading="lazy" />
                     <div class="card-border"></div>
@@ -239,7 +252,7 @@ onUnmounted(() => {
                     <h3 class="card-title">{{ village.title }}</h3>
                     <p class="card-subtitle">{{ village.subtitle }}</p>
                 </div>
-            </article>
+            </NuxtLink>
         </div>
     </section>
 </template>
@@ -352,6 +365,9 @@ onUnmounted(() => {
     opacity: 0;
     transform: translateY(50px);
     transition: opacity 1s ease-out, transform 1s cubic-bezier(0.215, 0.61, 0.355, 1);
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
 }
 
 .village-card.is-visible {
