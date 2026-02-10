@@ -10,36 +10,61 @@ withDefaults(defineProps<Props>(), {
 
 <template>
     <section class="city-head">
+        <div class="city-head__bg"></div>
         <div class="container">
-            <h2 class="city-head__title">
-                {{ cityName }}
-            </h2>
+            <div class="city-head__inner">
+                <h2 class="city-head__title">
+                    {{ cityName }}
+                </h2>
+            </div>
         </div>
     </section>
 </template>
 
 <style scoped>
 .city-head {
+    position: relative;
+    display: block;
+    padding: 109px 0 120px;
+    background-color: transparent;
+}
+
+.city-head__bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
     width: 100%;
-    height: 25dvh;
-    display: flex;
-    align-items: center;
-    justify-content: start;
-    border-top: 3px solid #d4af37;
-    border-bottom: 3px solid #d4af37;
-    box-shadow: 
-        inset 0 6px 0 0 #d4af37,
-        inset 0 -6px 0 0 #d4af37;
-    background-color: rgba(0, 0, 0, 0.1);
+    background-color: rgba(0, 0, 0, 0.65);
+}
+
+.city-head__inner {
+    position: relative;
+    display: block;
+    text-align: center;
+    z-index: 1;
 }
 
 .city-head__title {
-    margin: 0;
+    font-size: 50px;
+    color: var(--thm-base, #d4af37);
+    font-weight: 900;
+    line-height: 70px;
+    text-transform: capitalize;
+    margin-bottom: 0;
+    letter-spacing: 0.1em;
     font-family: var(--font-display);
-    font-size: clamp(2rem, 8vw, 4rem);
-    font-weight: 400;
-    color: #333;
-    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .city-head {
+        padding: 60px 0 70px;
+    }
+
+    .city-head__title {
+        font-size: 36px;
+        line-height: 44px;
+    }
 }
 
 .container {
