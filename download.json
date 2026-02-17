@@ -1,0 +1,406 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Tourism Villages API",
+        "description": "API for Tourism Villages — cities, villages, gallery, comments, and settings.",
+        "version": "v1"
+    },
+    "host": "127.0.0.1:8000",
+    "schemes": [
+        "https",
+        "http"
+    ],
+    "basePath": "/api",
+    "consumes": [
+        "application/json"
+    ],
+    "produces": [
+        "application/json"
+    ],
+    "securityDefinitions": {
+        "Basic": {
+            "type": "basic"
+        }
+    },
+    "security": [
+        {
+            "Basic": []
+        }
+    ],
+    "paths": {
+        "/cities/": {
+            "get": {
+                "operationId": "cities_list",
+                "description": "List all active cities ordered by position.",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "required": false,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "The initial index from which to return the results.",
+                        "required": false,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "required": [
+                                "count",
+                                "results"
+                            ],
+                            "type": "object",
+                            "properties": {
+                                "count": {
+                                    "type": "integer"
+                                },
+                                "next": {
+                                    "type": "string",
+                                    "format": "uri",
+                                    "x-nullable": true
+                                },
+                                "previous": {
+                                    "type": "string",
+                                    "format": "uri",
+                                    "x-nullable": true
+                                },
+                                "results": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/CityList"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "cities"
+                ]
+            },
+            "parameters": []
+        },
+        "/cities/{slug}/": {
+            "get": {
+                "operationId": "cities_read",
+                "description": "Retrieve a city by slug, including its villages.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/CityDetail"
+                        }
+                    }
+                },
+                "tags": [
+                    "cities"
+                ]
+            },
+            "parameters": [
+                {
+                    "name": "slug",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                }
+            ]
+        },
+        "/settings/": {
+            "get": {
+                "operationId": "settings_list",
+                "description": "Retrieve singleton site settings.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": ""
+                    }
+                },
+                "tags": [
+                    "settings"
+                ]
+            },
+            "parameters": []
+        },
+        "/villages/": {
+            "get": {
+                "operationId": "villages_list",
+                "description": "List all active villages. Filter by `city` query param.",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "Number of results to return per page.",
+                        "required": false,
+                        "type": "integer"
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "The initial index from which to return the results.",
+                        "required": false,
+                        "type": "integer"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "required": [
+                                "count",
+                                "results"
+                            ],
+                            "type": "object",
+                            "properties": {
+                                "count": {
+                                    "type": "integer"
+                                },
+                                "next": {
+                                    "type": "string",
+                                    "format": "uri",
+                                    "x-nullable": true
+                                },
+                                "previous": {
+                                    "type": "string",
+                                    "format": "uri",
+                                    "x-nullable": true
+                                },
+                                "results": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/definitions/VillageList"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "tags": [
+                    "villages"
+                ]
+            },
+            "parameters": []
+        },
+        "/villages/{slug}/": {
+            "get": {
+                "operationId": "villages_read",
+                "description": "Retrieve a village by slug, including gallery and comments.",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "",
+                        "schema": {
+                            "$ref": "#/definitions/VillageDetail"
+                        }
+                    }
+                },
+                "tags": [
+                    "villages"
+                ]
+            },
+            "parameters": [
+                {
+                    "name": "slug",
+                    "in": "path",
+                    "required": true,
+                    "type": "string"
+                }
+            ]
+        }
+    },
+    "definitions": {
+        "CityList": {
+            "required": [
+                "name"
+            ],
+            "type": "object",
+            "properties": {
+                "id": {
+                    "title": "ID",
+                    "type": "integer",
+                    "readOnly": true
+                },
+                "name": {
+                    "title": "Nomi",
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                },
+                "slug": {
+                    "title": "Slug",
+                    "type": "string",
+                    "format": "slug",
+                    "maxLength": 255
+                },
+                "short_description": {
+                    "title": "Qisqa tavsif",
+                    "type": "string"
+                },
+                "village_count": {
+                    "title": "Village count",
+                    "type": "integer",
+                    "readOnly": true
+                }
+            }
+        },
+        "CityDetail": {
+            "required": [
+                "name"
+            ],
+            "type": "object",
+            "properties": {
+                "id": {
+                    "title": "ID",
+                    "type": "integer",
+                    "readOnly": true
+                },
+                "name": {
+                    "title": "Nomi",
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                },
+                "slug": {
+                    "title": "Slug",
+                    "type": "string",
+                    "format": "slug",
+                    "maxLength": 255
+                },
+                "short_description": {
+                    "title": "Qisqa tavsif",
+                    "type": "string"
+                },
+                "villages": {
+                    "title": "Villages",
+                    "type": "string",
+                    "readOnly": true
+                }
+            }
+        },
+        "VillageList": {
+            "required": [
+                "name",
+                "city"
+            ],
+            "type": "object",
+            "properties": {
+                "id": {
+                    "title": "ID",
+                    "type": "integer",
+                    "readOnly": true
+                },
+                "name": {
+                    "title": "Nomi",
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                },
+                "slug": {
+                    "title": "Slug",
+                    "type": "string",
+                    "format": "slug",
+                    "maxLength": 255
+                },
+                "short_description": {
+                    "title": "Qisqa tavsif",
+                    "type": "string"
+                },
+                "city": {
+                    "title": "Shahar",
+                    "type": "integer"
+                },
+                "city_name": {
+                    "title": "City name",
+                    "type": "string",
+                    "readOnly": true,
+                    "minLength": 1
+                },
+                "latitude": {
+                    "title": "Kenglik (lat)",
+                    "type": "string",
+                    "format": "decimal",
+                    "x-nullable": true
+                },
+                "longitude": {
+                    "title": "Uzunlik (long)",
+                    "type": "string",
+                    "format": "decimal",
+                    "x-nullable": true
+                }
+            }
+        },
+        "VillageDetail": {
+            "required": [
+                "name",
+                "city"
+            ],
+            "type": "object",
+            "properties": {
+                "id": {
+                    "title": "ID",
+                    "type": "integer",
+                    "readOnly": true
+                },
+                "name": {
+                    "title": "Nomi",
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 1
+                },
+                "slug": {
+                    "title": "Slug",
+                    "type": "string",
+                    "format": "slug",
+                    "maxLength": 255
+                },
+                "short_description": {
+                    "title": "Qisqa tavsif",
+                    "type": "string"
+                },
+                "description": {
+                    "title": "Tavsif",
+                    "type": "string"
+                },
+                "city": {
+                    "title": "Shahar",
+                    "type": "integer"
+                },
+                "city_name": {
+                    "title": "City name",
+                    "type": "string",
+                    "readOnly": true,
+                    "minLength": 1
+                },
+                "latitude": {
+                    "title": "Kenglik (lat)",
+                    "type": "string",
+                    "format": "decimal",
+                    "x-nullable": true
+                },
+                "longitude": {
+                    "title": "Uzunlik (long)",
+                    "type": "string",
+                    "format": "decimal",
+                    "x-nullable": true
+                },
+                "gallery": {
+                    "title": "Gallery",
+                    "type": "string",
+                    "readOnly": true
+                },
+                "comments": {
+                    "title": "Comments",
+                    "type": "string",
+                    "readOnly": true
+                }
+            }
+        }
+    }
+}

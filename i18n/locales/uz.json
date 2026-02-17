@@ -1,0 +1,49 @@
+{
+    "hero": {
+        "loader": "O'zbekiston kashf etilmoqda...",
+        "backToOverview": "← Umumiy ko'rinishga",
+        "mouseHint": "Sichqonchani suring",
+        "clickHint": "Shaharni bosing",
+        "title": "Turizm qishloqlari",
+        "subtitle": "O'ZBEKISTONDA"
+    },
+    "about": {
+        "subtitle": "HAQIDA",
+        "title": "Turizm qishlog'i nima",
+        "description1": "O'zbekiston — Markaziy Osiyoning yuragi, qadimiy tarix nafis me'morchilik bilan uyg'unlashgan o'lka. Samarqandning ko'k gumbazlaridan Qizilqum cho'lining bepoyonligiga qadar har bir burchak buyuk Ipak yo'li haqida so'zlaydi.",
+        "description2": "Asrlar davomida hunarmandchilik an'analari saqlanib kelayotgan an'anaviy qishloqlarni kashf eting, dunyoga mashhur mehmondo'stlikni his qiling va ming yillar davomida sayyohlarni ilhomlantirgan manzaralarni ko'ring.",
+        "statSites": "YUNESKO obyektlari",
+        "statHistory": "Yillik tarix",
+        "statVillages": "Turizm qishloqlari",
+        "exploreMore": "Batafsil"
+    },
+    "cityHead": {
+        "defaultTitle": "O'zbekistonning yashirin durdonalarini kashf eting"
+    },
+    "cityVillages": {
+        "headerSubtitle": "\"Unutilgan davrning aks-sadolari, toshlar qadimiy hikoyalar shivirlab,\nshamol tarix hidi bilan esadi.\""
+    },
+    "village": {
+        "backToExplore": "Orqaga",
+        "gallery": {
+            "title": "GALEREYA"
+        },
+        "map": {
+            "title": "JOYLASHUV"
+        },
+        "comments": {
+            "badge": "SAYOHATCHILAR OVOZI",
+            "title": "Fikrlar",
+            "subtitle": "Sayohat qilganlarning shivirlari",
+            "readMore": "To'liq hikoyani o'qing"
+        }
+    },
+    "seo": {
+        "homeTitle": "O'zbekiston turizmi — Yashirin durdonalar",
+        "homeDescription": "O'zbekistonning yashirin durdonalarini kashf eting. Interaktiv 3D xarita orqali mamlakatdagi turizm qishloqlarini o'rganing.",
+        "villageSuffix": "O'zbekiston turizmi"
+    },
+    "languageSwitcher": {
+        "label": "Til"
+    }
+}

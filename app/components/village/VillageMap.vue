@@ -95,7 +95,7 @@ onUnmounted(() => {
         <!-- Header -->
         <header class="village-map__header">
             <div class="village-map__star">✦</div>
-            <h2 class="village-map__title">LOCATION</h2>
+            <h2 class="village-map__title">{{ $t('village.map.title') }}</h2>
             <div class="village-map__line"></div>
         </header>
 

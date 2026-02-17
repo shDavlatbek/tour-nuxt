@@ -3,15 +3,56 @@ import { watch, computed, onMounted } from 'vue'
 import { useSeoMeta } from 'nuxt/app'
 import { useScrollTransition } from '../composables/useScrollTransition'
 import { useScrollableSection } from '../composables/useScrollableSection'
+import type { CityList, VillageList, PaginatedResponse } from '~/types/village'
 
-// Import image for CityHead section
-import registanBackground from '~/assets/images/registan.jpg'
+interface CityWithVillages extends CityList {
+    villages: VillageList[]
+}
+
+const { t } = useI18n()
+const { locale } = useI18n()
+const config = useRuntimeConfig()
+const apiBase = config.public.apiBase as string
+
+const headers = computed(() => ({
+    'Accept-Language': locale.value,
+}))
+
+// --- Fetch cities + their villages in a single useAsyncData call ---
+const { data: cities } = await useAsyncData<CityWithVillages[]>(
+    'cities-with-villages',
+    async () => {
+        const citiesRes = await $fetch<PaginatedResponse<CityList>>('/cities/', {
+            baseURL: apiBase,
+            headers: headers.value,
+        })
+
+        const cityList = citiesRes.results ?? []
+
+        const citiesWithVillages = await Promise.all(
+            cityList.map(async (city) => {
+                const villagesRes = await $fetch<PaginatedResponse<VillageList>>('/villages/', {
+                    baseURL: apiBase,
+                    headers: headers.value,
+                    params: { city: city.slug },
+                })
+                return {
+                    ...city,
+                    villages: villagesRes.results ?? [],
+                }
+            })
+        )
+
+        return citiesWithVillages
+    },
+    { watch: [locale] }
+)
 
 useSeoMeta({
-    title: 'Uzbekistan Tourism - Hidden Gems',
-    description: 'Discover the hidden gems of Uzbekistan. Explore tourism villages across the country through our interactive 3D map.',
-    ogTitle: 'Uzbekistan Tourism - Hidden Gems',
-    ogDescription: 'Discover the hidden gems of Uzbekistan. Explore tourism villages across the country through our interactive 3D map.',
+    title: t('seo.homeTitle'),
+    description: t('seo.homeDescription'),
+    ogTitle: t('seo.homeTitle'),
+    ogDescription: t('seo.homeDescription'),
     ogType: 'website',
 })
 
@@ -131,10 +172,11 @@ const scrollIndicatorProgress = computed(() => {
             </ClientOnly>
         </div>
 
-        <!-- Scroll Layer: CityHead (dvh-based transform from useScrollableSection) -->
+        <!-- Scroll Layer: One CityHead + CityVillages block per city -->
         <div ref="cityHeadRef" class="scroll-layer" :style="cityHeadStyle">
-            <CityHead :background-image="registanBackground" />
-            <CityVillages />
+            <CityHead />
+            <CityVillages v-for="city in cities" :key="city.id" :villages="city.villages ?? []"
+                :city-name="city.name" />
         </div>
 
         <!-- Visual Scroll Indicator -->

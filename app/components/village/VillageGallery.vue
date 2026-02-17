@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
-import type { GalleryImage } from '~/types/village'
+import type { GalleryImageDisplay } from '~/types/village'
 
 interface Props {
-    images: GalleryImage[]
+    images: GalleryImageDisplay[]
 }
 
 const props = defineProps<Props>()
@@ -83,7 +83,7 @@ onUnmounted(() => {
         <!-- Header -->
         <header class="village-gallery__header">
             <div class="village-gallery__star">✦</div>
-            <h2 class="village-gallery__title">GALLERY</h2>
+            <h2 class="village-gallery__title">{{ $t('village.gallery.title') }}</h2>
             <div class="village-gallery__line"></div>
         </header>
 

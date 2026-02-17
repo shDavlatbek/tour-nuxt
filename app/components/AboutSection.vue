@@ -60,38 +60,30 @@ const isInteractive = computed(() => props.progress > 0.95)
         <div v-if="hasImageBackground" class="about-overlay" />
 
         <div class="about-content">
-            <p class="about-subtitle">ABOUT</p>
-            <h2 class="about-title">What is Tourism Village</h2>
+            <p class="about-subtitle">{{ $t('about.subtitle') }}</p>
+            <h2 class="about-title">{{ $t('about.title') }}</h2>
 
             <div class="about-description">
-                <p>
-                    Uzbekistan, the heart of Central Asia, is a land where ancient history meets
-                    breathtaking architecture. From the turquoise domes of Samarkand to the
-                    pristine deserts of Kyzylkum, every corner tells a story of the legendary Silk Road.
-                </p>
-                <p>
-                    Explore traditional villages where centuries-old crafts thrive, taste the
-                    world-renowned hospitality, and witness landscapes that have inspired
-                    travelers for millennia.
-                </p>
+                <p>{{ $t('about.description1') }}</p>
+                <p>{{ $t('about.description2') }}</p>
             </div>
 
             <div class="about-stats">
                 <div class="stat-item">
                     <span class="stat-number">7</span>
-                    <span class="stat-label">UNESCO Sites</span>
+                    <span class="stat-label">{{ $t('about.statSites') }}</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-number">3000+</span>
-                    <span class="stat-label">Years of History</span>
+                    <span class="stat-label">{{ $t('about.statHistory') }}</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-number">100+</span>
-                    <span class="stat-label">Tourism Villages</span>
+                    <span class="stat-label">{{ $t('about.statVillages') }}</span>
                 </div>
             </div>
 
-            <button class="about-button">Explore More</button>
+            <button class="about-button">{{ $t('about.exploreMore') }}</button>
         </div>
     </section>
 </template>

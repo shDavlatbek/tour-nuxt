@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import type { VillageComment } from '~/types/village'
+import type { VillageCommentDisplay } from '~/types/village'
 
 interface Props {
-    comments: VillageComment[]
+    comments: VillageCommentDisplay[]
 }
 
 defineProps<Props>()
@@ -38,10 +38,10 @@ onUnmounted(() => {
         <!-- Header -->
         <header class="village-comments__header">
             <div class="village-comments__badge-wrapper">
-                <span class="village-comments__badge">TRAVELER'S VOICES</span>
+                <span class="village-comments__badge">{{ $t('village.comments.badge') }}</span>
             </div>
-            <h2 class="village-comments__title">Reflections</h2>
-            <p class="village-comments__subtitle">Whispers from those who wandered</p>
+            <h2 class="village-comments__title">{{ $t('village.comments.title') }}</h2>
+            <p class="village-comments__subtitle">{{ $t('village.comments.subtitle') }}</p>
         </header>
 
         <!-- Grid of Cards (matching code.html layout) -->
@@ -54,7 +54,7 @@ onUnmounted(() => {
                 <div class="comment-card__body">
                     <p class="comment-card__text">{{ comment.text }}</p>
                     <button class="comment-card__read-more">
-                        Read Full Story
+                        {{ $t('village.comments.readMore') }}
                         <span class="comment-card__read-more-icon">▾</span>
                     </button>
                 </div>

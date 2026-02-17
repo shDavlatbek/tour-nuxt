@@ -1,28 +1,66 @@
-export interface VillageDetail {
-  id: string
-  cityName: string
-  villageName: string
-  heroImage: string
-  description: {
-    subtitle: string
-    paragraphs: string[]
-  }
-  gallery: GalleryImage[]
-  comments: VillageComment[]
-  location: {
-    lat: number
-    lng: number
-    zoom: number
-  }
+// --- Paginated Response Wrapper ---
+export interface PaginatedResponse<T> {
+  count: number
+  next: string | null
+  previous: string | null
+  results: T[]
 }
 
+// --- City ---
+export interface CityList {
+  id: number
+  name: string
+  slug: string
+  short_description: string
+  village_count: number
+}
+
+export interface CityDetail extends CityList {
+  villages: VillageList[]
+}
+
+// --- Village ---
+export interface VillageList {
+  id: number
+  name: string
+  slug: string
+  short_description: string
+  city: number
+  city_name: string
+  latitude: string | null
+  longitude: string | null
+}
+
+export interface VillageDetail extends VillageList {
+  description: string
+  gallery: GalleryImage[]
+  comments: VillageComment[]
+}
+
+// --- Gallery (API response) ---
 export interface GalleryImage {
+  id: number
+  image: string
+  name: string
+}
+
+// --- Comment (API response) ---
+export interface VillageComment {
+  id: number
+  full_name: string
+  who: string
+  comment: string
+  created_at: string
+}
+
+// --- Display interfaces used by components ---
+export interface GalleryImageDisplay {
   id: number
   src: string
   alt: string
 }
 
-export interface VillageComment {
+export interface VillageCommentDisplay {
   id: number
   text: string
   authorName: string

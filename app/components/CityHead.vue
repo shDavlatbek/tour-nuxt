@@ -1,11 +1,15 @@
 <script setup lang="ts">
+const { t } = useI18n()
+
 interface Props {
     cityName?: string
 }
 
-withDefaults(defineProps<Props>(), {
-    cityName: 'Explore the hidden gems of Uzbekistan',
+const props = withDefaults(defineProps<Props>(), {
+    cityName: '',
 })
+
+const displayName = computed(() => props.cityName || t('cityHead.defaultTitle'))
 </script>
 
 <template>
@@ -14,7 +18,7 @@ withDefaults(defineProps<Props>(), {
         <div class="container">
             <div class="city-head__inner">
                 <h2 class="city-head__title">
-                    {{ cityName }}
+                    {{ displayName }}
                 </h2>
             </div>
         </div>

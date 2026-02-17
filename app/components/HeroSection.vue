@@ -120,7 +120,7 @@ function handleBackClick() {
     <section class="hero">
         <!-- Loading State -->
         <div class="hero__loader" :class="{ 'hero__loader--hidden': !state.isLoading }">
-            Discovering Uzbekistan...
+            {{ $t('hero.loader') }}
         </div>
 
         <!-- Three.js Canvas Container -->
@@ -131,7 +131,7 @@ function handleBackClick() {
         <!-- Back Button -->
         <button class="hero__back-button" :class="{ 'hero__back-button--visible': state.isZoomed }"
             @click="handleBackClick">
-            ← Back to Overview
+            {{ $t('hero.backToOverview') }}
         </button>
 
         <!-- Zoom Vignette -->
@@ -150,7 +150,7 @@ function handleBackClick() {
                     </div>
                 </div>
             </div>
-            <span class="hero__mouse-hint-text">Move mouse to explore</span>
+            <span class="hero__mouse-hint-text">{{ $t('hero.mouseHint') }}</span>
         </div>
 
         <!-- Click City Hint -->
@@ -167,15 +167,15 @@ function handleBackClick() {
                             stroke="rgba(0,0,0,0.3)" stroke-width="1" stroke-linejoin="round" />
                     </svg>
                 </div>
-                <span class="hero__click-hint-text">Click a city to explore</span>
+                <span class="hero__click-hint-text">{{ $t('hero.clickHint') }}</span>
             </div>
         </ClientOnly>
 
         <!-- UI Layer -->
         <div class="hero__ui-layer" v-if="!hidden">
             <div class="hero__header">
-                <h1 class="hero__title">Tourism Villages</h1>
-                <p class="hero__subtitle">in UZBEKISTAN</p>
+                <h1 class="hero__title">{{ $t('hero.title') }}</h1>
+                <p class="hero__subtitle">{{ $t('hero.subtitle') }}</p>
             </div>
         </div>
     </section>
