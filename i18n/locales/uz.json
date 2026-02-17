@@ -8,7 +8,7 @@
         "subtitle": "O'ZBEKISTONDA"
     },
     "about": {
-        "subtitle": "HAQIDA",
+        "subtitle": "BIZ HAQIMIZDA",
         "title": "Turizm qishlog'i nima",
         "description1": "O'zbekiston — Markaziy Osiyoning yuragi, qadimiy tarix nafis me'morchilik bilan uyg'unlashgan o'lka. Samarqandning ko'k gumbazlaridan Qizilqum cho'lining bepoyonligiga qadar har bir burchak buyuk Ipak yo'li haqida so'zlaydi.",
         "description2": "Asrlar davomida hunarmandchilik an'analari saqlanib kelayotgan an'anaviy qishloqlarni kashf eting, dunyoga mashhur mehmondo'stlikni his qiling va ming yillar davomida sayyohlarni ilhomlantirgan manzaralarni ko'ring.",
@@ -21,7 +21,8 @@
         "defaultTitle": "O'zbekistonning yashirin durdonalarini kashf eting"
     },
     "cityVillages": {
-        "headerSubtitle": "\"Unutilgan davrning aks-sadolari, toshlar qadimiy hikoyalar shivirlab,\nshamol tarix hidi bilan esadi.\""
+        "headerSubtitle": "\"Unutilgan davrning aks-sadolari, toshlar qadimiy hikoyalar shivirlab,\nshamol tarix hidi bilan esadi.\"",
+        "noVillages": "Tez orada..."
     },
     "village": {
         "backToExplore": "Orqaga",

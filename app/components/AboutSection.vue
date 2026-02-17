@@ -12,8 +12,11 @@ const props = withDefaults(defineProps<Props>(), {
     backgroundImage: '',
 })
 
+const { fetchSettings } = useApi()
+const { data: settings } = await fetchSettings()
+
 // Show background image when progress > 0.8
-const showBackgroundImage = computed(() => props.progress > 0.8 && props.backgroundImage)
+const showBackgroundImage = computed(() => props.progress > 0.8 && (settings.value?.bg_image || props.backgroundImage))
 
 // Transform calculation for slide-up effect
 const sectionStyle = computed(() => {
@@ -39,7 +42,7 @@ const backgroundStyle = computed(() => {
         : 0
 
     return {
-        backgroundImage: `url(${props.backgroundImage})`,
+        backgroundImage: `url(${settings.value?.bg_image || props.backgroundImage})`,
         opacity: fadeProgress,
     }
 })
@@ -61,11 +64,14 @@ const isInteractive = computed(() => props.progress > 0.95)
 
         <div class="about-content">
             <p class="about-subtitle">{{ $t('about.subtitle') }}</p>
-            <h2 class="about-title">{{ $t('about.title') }}</h2>
+            <h2 class="about-title">{{ settings?.about_title || $t('about.title') }}</h2>
 
             <div class="about-description">
-                <p>{{ $t('about.description1') }}</p>
-                <p>{{ $t('about.description2') }}</p>
+                <p v-if="settings?.about_description">{{ settings.about_description }}</p>
+                <template v-else>
+                    <p>{{ $t('about.description1') }}</p>
+                    <p>{{ $t('about.description2') }}</p>
+                </template>
             </div>
 
             <div class="about-stats">

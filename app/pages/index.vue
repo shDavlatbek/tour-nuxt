@@ -177,6 +177,7 @@ const scrollIndicatorProgress = computed(() => {
             <CityHead />
             <CityVillages v-for="city in cities" :key="city.id" :villages="city.villages ?? []"
                 :city-name="city.name" />
+            <AppFooter />
         </div>
 
         <!-- Visual Scroll Indicator -->

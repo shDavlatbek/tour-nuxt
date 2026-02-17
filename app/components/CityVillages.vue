@@ -68,17 +68,25 @@ onUnmounted(() => {
             <div class="separator-line"></div>
         </header>
 
-        <div class="villages-grid">
+        <div v-if="props.villages.length > 0" class="villages-grid">
             <NuxtLink v-for="(village, index) in props.villages" :key="village.id"
                 :to="$localePath({ name: 'villages-slug', params: { slug: village.slug } })" ref="cardRefs"
                 class="village-card" :class="{ 'is-visible': visibleVillages.has(village.id) }" :data-id="village.id"
                 :style="{ transitionDelay: `${index * 100}ms` }">
+                <div class="card-image-wrapper">
+                    <img :src="village.image?.original" :alt="village.name" class="card-image" loading="lazy" />
+                    <div class="card-border"></div>
+                </div>
                 <div class="card-content">
                     <div class="card-divider"></div>
                     <h3 class="card-title">{{ village.name }}</h3>
                     <p class="card-subtitle">{{ village.short_description }}</p>
                 </div>
             </NuxtLink>
+        </div>
+
+        <div v-else class="no-data-message">
+            <p>{{ $t('cityVillages.noVillages') }}</p>
         </div>
     </section>
 </template>
@@ -89,7 +97,7 @@ onUnmounted(() => {
     background-color: #f5f0e6;
     color: #4a3b32;
     text-align: center;
-    min-height: 100vh;
+    /* min-height: 100vh; */
     position: relative;
 }
 
@@ -219,5 +227,14 @@ onUnmounted(() => {
 .card-subtitle {
     font-style: italic;
     color: #8c8c8c;
+}
+
+.no-data-message {
+    text-align: center;
+    padding: 2rem;
+    font-family: var(--font-primary);
+    font-size: 1.5rem;
+    color: #8c8c8c;
+    font-style: italic;
 }
 </style>

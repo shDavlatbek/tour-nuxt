@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   future: {
     compatibilityVersion: 4,
   },
-  modules: ['@nuxtjs/i18n'],
+  modules: ['@nuxtjs/i18n', '@nuxt/icon'],
   runtimeConfig: {
     public: {
       apiBase: 'http://127.0.0.1:8000/api',

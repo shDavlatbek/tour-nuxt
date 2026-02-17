@@ -65,12 +65,12 @@ function goBack(): void {
 
         <!-- Sections -->
         <VillageHero :city-name="village.city_name" :village-name="village.name"
-            :hero-image="village.gallery?.[0]?.image ?? ''" />
+            :hero-image="village.image?.original ?? ''" />
 
         <VillageDescription :subtitle="village.short_description"
             :paragraphs="village.description ? [village.description] : []" />
 
-        <VillageGallery :images="village.gallery.map(g => ({ id: g.id, src: g.image, alt: g.name }))" />
+        <VillageGallery :images="village.gallery.map(g => ({ id: g.id, src: g.image.original, alt: g.name }))" />
 
         <VillageComments :comments="village.comments.map(c => ({
             id: c.id,
@@ -84,6 +84,8 @@ function goBack(): void {
             <VillageMap :lat="village.latitude ? parseFloat(village.latitude) : 0"
                 :lng="village.longitude ? parseFloat(village.longitude) : 0" :zoom="13" :village-name="village.name" />
         </ClientOnly>
+
+        <AppFooter />
     </div>
 </template>
 

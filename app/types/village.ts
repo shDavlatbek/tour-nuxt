@@ -29,6 +29,10 @@ export interface VillageList {
   city_name: string
   latitude: string | null
   longitude: string | null
+  image: {
+    original: string
+    thumbnail: string
+  } | null
 }
 
 export interface VillageDetail extends VillageList {
@@ -40,7 +44,10 @@ export interface VillageDetail extends VillageList {
 // --- Gallery (API response) ---
 export interface GalleryImage {
   id: number
-  image: string
+  image: {
+    original: string
+    thumbnail: string
+  }
   name: string
 }
 
@@ -66,4 +73,11 @@ export interface VillageCommentDisplay {
   authorName: string
   authorRole: string
   authorInitials: string
+}
+
+// --- Settings (API response) ---
+export interface SiteSettings {
+  about_title: string
+  about_description: string
+  bg_image: string | null
 }

@@ -4,6 +4,7 @@ import type {
   CityDetail,
   VillageList,
   VillageDetail,
+  SiteSettings,
 } from '~/types/village'
 
 /**
@@ -65,10 +66,22 @@ export function useApi() {
     })
   }
 
+  /**
+   * Fetch site settings (about section content).
+   */
+  function fetchSettings() {
+    return useFetch<SiteSettings>('/settings/', {
+      baseURL: baseURL.value,
+      headers: headers.value,
+      watch: [locale],
+    })
+  }
+
   return {
     fetchCities,
     fetchCityBySlug,
     fetchVillagesByCity,
     fetchVillageBySlug,
+    fetchSettings,
   }
 }
