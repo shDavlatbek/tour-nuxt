@@ -1,0 +1,43 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker compose -f docker-compose.prod.yml build --no-cache
+
+      - name: Stop old containers
+        run: docker compose -f docker-compose.prod.yml down --remove-orphans
+
+      - name: Start new containers
+        run: docker compose -f docker-compose.prod.yml up -d
+
+      - name: Wait for app to be healthy
+        run: |
+          echo "Waiting for app to start..."
+          for i in $(seq 1 30); do
+            if wget --no-verbose --tries=1 --spider http://localhost:3000/ 2>/dev/null; then
+              echo "App is healthy!"
+              exit 0
+            fi
+            echo "Attempt $i/30 - waiting 5s..."
+            sleep 5
+          done
+          echo "App failed to start within 150 seconds"
+          docker compose -f docker-compose.prod.yml logs
+          exit 1
+
+      - name: Clean up old Docker resources
+        if: success()
+        run: docker image prune -f
