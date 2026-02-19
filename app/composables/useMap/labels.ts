@@ -279,6 +279,9 @@ function createLabelSprite(text: string, direction: string): THREE.Sprite {
   return sprite
 }
 
+const _markerWorldPos = new THREE.Vector3()
+const _screenPos = new THREE.Vector3()
+
 /**
  * Updates label visibility based on cursor/touch proximity
  */
@@ -290,13 +293,12 @@ export function updateLabelsProximity(
   tweenGroup: Group
 ): void {
   labels.forEach((label) => {
-    // Get marker screen position
-    const markerWorldPos = new THREE.Vector3()
-    label.markerRef.getWorldPosition(markerWorldPos)
+    // Get marker screen position using shared vector to prevent GC pressure
+    label.markerRef.getWorldPosition(_markerWorldPos)
     
-    const screenPos = markerWorldPos.clone().project(camera)
-    const screenX = (screenPos.x * 0.5 + 0.5) * window.innerWidth
-    const screenY = (-screenPos.y * 0.5 + 0.5) * window.innerHeight
+    _screenPos.copy(_markerWorldPos).project(camera)
+    const screenX = (_screenPos.x * 0.5 + 0.5) * window.innerWidth
+    const screenY = (-_screenPos.y * 0.5 + 0.5) * window.innerHeight
 
     // Calculate distance from cursor to marker
     const dx = mouseScreenPos.x - screenX
@@ -349,11 +351,10 @@ export function updateLabelPositions(
     const offsetX = config?.offsetX || 0
     const offsetY = config?.offsetY || 0
     
-    const markerWorldPos = new THREE.Vector3()
-    label.markerRef.getWorldPosition(markerWorldPos)
+    label.markerRef.getWorldPosition(_markerWorldPos)
     label.group.position.set(
-      markerWorldPos.x + offsetX,
-      markerWorldPos.y + offsetY,
+      _markerWorldPos.x + offsetX,
+      _markerWorldPos.y + offsetY,
       20
     )
   })

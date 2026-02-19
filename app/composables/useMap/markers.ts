@@ -3,9 +3,7 @@ import { COLORS, INITIAL_CAM_POS, REGION_NAMES } from './config'
 
 // Ripple animation settings
 const RIPPLE_SPEED = 0.8 // Speed of ripple expansion
-const RIPPLE_MAX_SCALE = 1.5 // How far the ripple expands
-const RIPPLE_START_THICKNESS = 0.1 // Starting border thickness
-const RIPPLE_END_THICKNESS = 1.5 // Ending border thickness (grows like CSS border)
+const RIPPLE_MAX_SCALE = 2.0 // How far the ripple expands
 
 /**
  * Creates an interactive marker for a region with ripple effect
@@ -41,9 +39,8 @@ export function createMarker(
   ringMesh.name = 'staticRing'
   markerGroup.add(ringMesh)
 
-  // Ripple ring - single expanding ring with growing border
-  // Using TorusGeometry for the ripple (tube radius = border thickness)
-  const rippleGeo = new THREE.TorusGeometry(6, RIPPLE_START_THICKNESS, 16, 64)
+  // Ripple ring - single expanding ring, using generic scaling instead of regenerating geometry
+  const rippleGeo = new THREE.TorusGeometry(6, 0.5, 16, 64)
   const rippleMat = new THREE.MeshBasicMaterial({
     color: COLORS.marker,
     transparent: true,
@@ -92,7 +89,7 @@ export function updateMarkerScales(
 
 /**
  * Animates markers with a CSS-style ripple effect
- * Single ring expands outward with growing border thickness, then fades to 0
+ * Single ring expands outward via scaling, then fades to 0
  */
 export function animateMarkers(
   interactablePoints: THREE.Group[],
@@ -103,20 +100,12 @@ export function animateMarkers(
     
     if (!ripple || !ripple.userData.isRipple) return
 
-    const baseRadius = ripple.userData.baseRadius as number
-    
     // Calculate ripple progress (0 to 1, repeating)
     const progress = ((elapsedTime * RIPPLE_SPEED + index * 0.3) % 1)
     
-    // Ring expands as progress increases
-    const currentRadius = baseRadius * (1 + progress * (RIPPLE_MAX_SCALE - 1))
-    
-    // Border thickness grows from thin to thick (like CSS border animation)
-    const thickness = RIPPLE_START_THICKNESS + progress * (RIPPLE_END_THICKNESS - RIPPLE_START_THICKNESS)
-    
-    // Recreate geometry with new radius and thickness
-    ripple.geometry.dispose()
-    ripple.geometry = new THREE.TorusGeometry(currentRadius, thickness, 16, 64)
+    // Scale expands as progress increases
+    const currentScale = 1 + progress * (RIPPLE_MAX_SCALE - 1)
+    ripple.scale.set(currentScale, currentScale, 1)    
     
     // Opacity fades from 0.7 to 0 as ripple expands
     const material = ripple.material as THREE.MeshBasicMaterial
