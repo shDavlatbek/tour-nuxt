@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref, watch, onMounted } from 'vue'
-// 1. Import 'Timeline' directly for V4
-import { Timeline } from 'animejs'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import * as THREE from 'three'
 
 interface Props {
   progress: number // 0 to 1
@@ -9,11 +8,12 @@ interface Props {
 }
 
 const props = defineProps<Props>()
-const containerRef = ref<HTMLElement | null>(null)
+const canvasRef = ref<HTMLCanvasElement | null>(null)
 
-// Define the timeline variable. 
-// V4 types might be tricky in beta, so we can use 'any' or the specific class if available.
-let tl: any = null
+let scene: THREE.Scene | null = null
+let camera: THREE.OrthographicCamera | null = null
+let renderer: THREE.WebGLRenderer | null = null
+let sharedMaterial: THREE.SpriteMaterial | null = null
 
 const CLOUD_CONFIGS = [
   { id: 1, sx: -60, sy: 0, s: 2.5 },
@@ -26,66 +26,163 @@ const CLOUD_CONFIGS = [
   { id: 8, sx: 50, sy: 50, s: 2.0 },
 ]
 
+const clouds: THREE.Sprite[] = []
+
 onMounted(() => {
-  if (!containerRef.value) return
+  if (!canvasRef.value) return
 
-  // 2. Initialize V4 Timeline (Use 'new Timeline')
-  tl = new Timeline({
-    autoplay: false,
-    duration: 1000,
+  // Scene setup
+  scene = new THREE.Scene()
+
+  const w = window.innerWidth
+  const h = window.innerHeight
+
+  camera = new THREE.OrthographicCamera(-w / 2, w / 2, h / 2, -h / 2, 0.1, 1000)
+  camera.position.z = 100
+
+  renderer = new THREE.WebGLRenderer({
+    canvas: canvasRef.value,
+    alpha: true,
+    antialias: false, // Sprites don't need anti-aliasing
+    powerPreference: 'high-performance'
+  })
+  renderer.setSize(w, h)
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+
+  // Load cloud texture
+  const textureLoader = new THREE.TextureLoader()
+  textureLoader.load('/images/cloudsh.png', (texture) => {
+    if (!scene) return
+
+    // High quality filtering for smooth zooming
+    texture.minFilter = THREE.LinearFilter
+    texture.magFilter = THREE.LinearFilter
+
+    sharedMaterial = new THREE.SpriteMaterial({
+      map: texture,
+      transparent: true,
+      depthWrite: false,
+      opacity: 0 // start hidden
+    })
+
+    CLOUD_CONFIGS.forEach((config) => {
+      const sprite = new THREE.Sprite(sharedMaterial!)
+      sprite.userData = { config }
+      scene!.add(sprite)
+      clouds.push(sprite)
+    })
+
+    // Initial render
+    updateClouds()
+    forceRender()
   })
 
-  CLOUD_CONFIGS.forEach((cloud, index) => {
-    // Get the specific image element
-    const target = containerRef.value?.children[index]
-
-    if (target) {
-      // 3. V4 Syntax: .add(target, params, offset)
-      tl.add(target, {
-        // 1. MOVEMENT: From Edges (sx * 2) -> Center (0)
-        translateX: [
-          { to: `${cloud.sx * 2.5}vw`, duration: 0 }, // Start FAR off-screen
-          { to: '0vw', duration: 1000 } // End at center
-        ],
-        translateY: [
-          { to: `${cloud.sy * 2.5}dvh`, duration: 0 },
-          { to: '0dvh', duration: 1000 }
-        ],
-
-        // 2. SCALE: Start normal -> End Huge (covers screen)
-        scale: [
-          { to: cloud.s, duration: 0 },
-          { to: cloud.s * 4, duration: 1000 } // Huge zoom effect
-        ],
-
-        // 3. OPACITY: Fade in smoothly at the start
-        opacity: [
-          { to: 0, duration: 0 },    // Start invisible
-          { to: 1, duration: 200 },  // Fade in by 20% progress
-          { to: 1, duration: 800 }   // Stay visible
-        ]
-      }, 0)
-    }
-  })
+  window.addEventListener('resize', handleResize)
 })
 
-watch(() => props.progress, (newVal) => {
-  if (tl) {
-    // 4. Scrub the timeline (0 to 1000ms)
-    // In V4, .seek() might need milliseconds directly
-    tl.seek(newVal * 1000)
+function handleResize() {
+  if (!camera || !renderer || !scene) return
+  const w = window.innerWidth
+  const h = window.innerHeight
+  camera.left = -w / 2
+  camera.right = w / 2
+  camera.top = h / 2
+  camera.bottom = -h / 2
+  camera.updateProjectionMatrix()
+  renderer.setSize(w, h)
+
+  if (clouds.length > 0) {
+    updateClouds()
+    forceRender()
   }
+}
+
+function updateClouds() {
+  if (!sharedMaterial) return
+
+  const p = props.progress
+  const w = window.innerWidth
+  const h = window.innerHeight
+
+  const opacityProgress = Math.min(1, Math.max(0, p / 0.2))
+  sharedMaterial.opacity = opacityProgress
+
+  clouds.forEach(sprite => {
+    const config = sprite.userData.config
+
+    // Calculate movement targeting edge limits
+    const startX = (config.sx * 2.5 * w) / 100
+    const startY = -(config.sy * 2.5 * h) / 100 // CSS Y inverted for Three.js
+
+    const currentX = startX * (1 - p)
+    const currentY = startY * (1 - p)
+
+    sprite.position.set(currentX, currentY, 0)
+
+    // Calculate Scale respecting screen dimensions
+    const baseWidthRaw = w * 0.5
+    const baseWidth = Math.max(400, baseWidthRaw)
+
+    const texture = sharedMaterial!.map
+    let aspect = 2
+    if (texture && texture.image) {
+      const img = texture.image as HTMLImageElement
+      if (img.width && img.height) {
+        aspect = img.width / img.height
+      }
+    }
+
+    const currentScale = config.s + (config.s * 3 * p)
+    const targetWidth = baseWidth * currentScale
+    const targetHeight = targetWidth / aspect
+
+    sprite.scale.set(targetWidth, targetHeight, 1)
+  })
+}
+
+function forceRender() {
+  if (renderer && scene && camera) {
+    renderer.render(scene, camera)
+  }
+}
+
+// Re-render when scrolling instead of requestAnimationFrame loop to spare GPU
+watch(() => props.progress, () => {
+  if (clouds.length > 0) {
+    updateClouds()
+    forceRender()
+  }
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+
+  clouds.forEach(sprite => {
+    sprite.geometry.dispose()
+  })
+  clouds.length = 0
+
+  if (sharedMaterial) {
+    if (sharedMaterial.map) sharedMaterial.map.dispose()
+    sharedMaterial.dispose()
+  }
+
+  if (renderer) renderer.dispose()
+
+  scene = null
+  camera = null
+  renderer = null
+  sharedMaterial = null
 })
 </script>
 
 <template>
-  <div ref="containerRef" class="cloud-container" v-show="props.progress > 0.01 && props.aboutProgress < 0.99">
-    <img v-for="cloud in CLOUD_CONFIGS" :key="cloud.id" src="/images/cloudsh.png" class="cloud-sprite" />
+  <div class="cloud-container" v-show="props.progress > 0.01 && props.aboutProgress < 0.99">
+    <canvas ref="canvasRef" class="cloud-canvas"></canvas>
   </div>
 </template>
 
 <style scoped>
-/* Same styles as before */
 .cloud-container {
   position: fixed;
   inset: 0;
@@ -94,13 +191,10 @@ watch(() => props.progress, (newVal) => {
   overflow: hidden;
 }
 
-.cloud-sprite {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 50vw;
-  min-width: 400px;
-  /* Anime.js handles the transforms, just center the origin */
-  transform: translate(-50%, -50%);
+.cloud-canvas {
+  width: 100vw;
+  height: 100dvh;
+  display: block;
+  pointer-events: none;
 }
 </style>

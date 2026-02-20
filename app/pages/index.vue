@@ -67,9 +67,9 @@ const {
     setProgress
 } = useScrollTransition({
     initialMaxScroll: 2.0,
-    pins: [
-        { position: 1.0, duration: 500 } // Brief pause at About section complete
-    ]
+    // pins: [
+    //     { position: 1.0, duration: 500 } // Brief pause at About section complete
+    // ]
 })
 
 // --- 2. DEFINE SECTION PHASES (All return { progress, style }) ---

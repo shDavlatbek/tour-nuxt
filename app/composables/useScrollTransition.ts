@@ -20,8 +20,8 @@ export function useScrollTransition(options: ScrollOptions = {}) {
   const SECTION_PINS = options.pins ?? []
   
   // Physics Constants
-  const DAMPING = 0.05
-  const SENSITIVITY_WHEEL = 0.0005
+  const DAMPING = 0.08
+  const SENSITIVITY_WHEEL = 0.0006
   const SENSITIVITY_TOUCH = 0.002
 
   // --- State ---
