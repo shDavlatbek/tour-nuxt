@@ -1,4 +1,9 @@
 {
+    "header": {
+        "home": "Asosiy",
+        "about": "Biz haqimizda",
+        "villages": "Qishloqlar"
+    },
     "hero": {
         "loader": "O'zbekiston kashf etilmoqda...",
         "backToOverview": "← Umumiy ko'rinishga",

@@ -184,8 +184,8 @@ const scrollIndicatorProgress = computed(() => {
         <!-- Scroll Layer: One CityHead + CityVillages block per city -->
         <div ref="cityHeadRef" class="scroll-layer" :style="cityHeadStyle">
             <CityHead />
-            <CityVillages v-for="city in cities" :key="city.id" :villages="city.villages ?? []"
-                :city-name="city.name" />
+            <CityVillages v-for="city in (cities || [])" :key="city.id" :villages="city.villages ?? []"
+                :city-name="city.name" :short_description="city.short_description" />
             <AppFooter />
         </div>
 

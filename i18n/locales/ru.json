@@ -1,4 +1,9 @@
 {
+    "header": {
+        "home": "Главная",
+        "about": "О нас",
+        "villages": "Сёла"
+    },
     "hero": {
         "loader": "Открываем Узбекистан...",
         "backToOverview": "← Назад к обзору",

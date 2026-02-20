@@ -51,8 +51,8 @@ const closeMobileMenu = () => {
 
 const navLinks = [
     { name: 'header.home', target: 0.0 },
-    { name: 'header.destinations', target: 1.0 },
-    { name: 'header.about', target: 0.5 }
+    { name: 'header.about', target: 1.0 },
+    { name: 'header.villages', target: 2 },
 ]
 
 const handleNavClick = async (target: number) => {
@@ -154,7 +154,7 @@ function onLocaleChange(event: Event) {
 }
 
 .app-header--scrolled {
-    background: rgba(26, 26, 26, 0.85);
+    /* background: rgba(26, 26, 26, 0.85); */
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);

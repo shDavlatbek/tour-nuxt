@@ -1,4 +1,9 @@
 {
+    "header": {
+        "home": "Home",
+        "about": "About",
+        "villages": "Villages"
+    },
     "hero": {
         "loader": "Discovering Uzbekistan...",
         "backToOverview": "← Back to Overview",
