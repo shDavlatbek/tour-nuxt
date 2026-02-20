@@ -93,12 +93,18 @@ onUnmounted(() => {
 
 <style scoped>
 .villages-section {
-    padding: 6rem 2rem;
+    padding: 6rem 1rem;
     background-color: #f5f0e6;
     color: #4a3b32;
     text-align: center;
     /* min-height: 100vh; */
     position: relative;
+}
+
+@media (min-width: 768px) {
+    .villages-section {
+        padding: 6rem 2rem;
+    }
 }
 
 /* ===== Header & Grid (Unchanged mostly) ===== */
@@ -148,7 +154,7 @@ onUnmounted(() => {
 .villages-grid {
     display: grid;
     grid-template-columns: repeat(1, 1fr);
-    gap: 4rem;
+    gap: 2rem;
     max-width: 1400px;
     margin: 0 auto;
     position: relative;
@@ -157,6 +163,7 @@ onUnmounted(() => {
 
 @media (min-width: 768px) {
     .villages-grid {
+        gap: 4rem;
         grid-template-columns: repeat(2, 1fr);
     }
 }

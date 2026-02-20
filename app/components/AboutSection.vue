@@ -142,7 +142,8 @@ const isInteractive = computed(() => props.progress > 0.95)
     position: relative;
     z-index: 1;
     max-width: 900px;
-    padding: 60px 40px;
+    padding: 80px 40px 40px;
+    /* adjusted for header */
     text-align: center;
 }
 
@@ -270,8 +271,8 @@ const isInteractive = computed(() => props.progress > 0.95)
     }
 
     .about-title {
-        font-size: 2rem;
-        margin-bottom: 24px;
+        font-size: 1.8rem;
+        margin-bottom: 20px;
         line-height: 1.2;
     }
 
@@ -306,7 +307,7 @@ const isInteractive = computed(() => props.progress > 0.95)
     }
 
     .stat-number {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
     }
 
     .stat-label {

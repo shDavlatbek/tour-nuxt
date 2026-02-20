@@ -107,10 +107,19 @@ watch(scrollProgress, (val) => {
     if (typeof sessionStorage !== 'undefined') {
         sessionStorage.setItem(SCROLL_STORAGE_KEY, String(val))
     }
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('app:scrollProgress', { detail: val }))
+    }
 })
 
 // Restore scroll progress from sessionStorage on mount
 onMounted(() => {
+    if (typeof window !== 'undefined') {
+        window.addEventListener('app:scrollTo', ((e: CustomEvent) => {
+            setProgress(e.detail)
+        }) as EventListener)
+    }
+
     if (typeof sessionStorage !== 'undefined') {
         const saved = sessionStorage.getItem(SCROLL_STORAGE_KEY)
         if (saved !== null) {

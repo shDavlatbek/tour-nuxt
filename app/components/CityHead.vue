@@ -65,7 +65,7 @@ const displayName = computed(() => props.cityName || t('cityHead.defaultTitle'))
 
 @media (max-width: 768px) {
     .city-head {
-        padding: 60px 0 70px;
+        padding: 100px 0 70px;
     }
 
     .city-head__title {

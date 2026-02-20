@@ -173,7 +173,7 @@ function handleBackClick() {
 
         <!-- UI Layer -->
         <div class="hero__ui-layer" v-if="!hidden">
-            <div class="hero__header">
+            <div class="hero__header" style="padding-top: 80px;">
                 <h1 class="hero__title">{{ $t('hero.title') }}</h1>
                 <p class="hero__subtitle">{{ $t('hero.subtitle') }}</p>
             </div>

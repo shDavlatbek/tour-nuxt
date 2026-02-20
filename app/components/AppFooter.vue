@@ -384,7 +384,7 @@ function onLocaleChange(event: Event) {
     .footer-grid {
         grid-template-columns: 1fr;
         gap: 2rem;
-        padding: 3rem 1.5rem 2rem;
+        padding: 2rem 1rem 1rem;
     }
 
     .footer-brand .logo {
