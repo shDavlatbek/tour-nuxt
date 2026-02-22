@@ -79,7 +79,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <section ref="sectionRef" class="village-gallery">
+    <section v-if="images && images.length > 0" ref="sectionRef" class="village-gallery">
         <!-- Header -->
         <header class="village-gallery__header">
             <div class="village-gallery__star">✦</div>

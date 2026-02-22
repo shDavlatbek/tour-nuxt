@@ -141,7 +141,7 @@ const isInteractive = computed(() => props.progress > 0.95)
 .about-content {
     position: relative;
     z-index: 1;
-    max-width: 900px;
+    max-width: 1000px;
     padding: 80px 40px 40px;
     /* adjusted for header */
     text-align: center;

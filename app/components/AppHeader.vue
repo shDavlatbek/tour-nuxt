@@ -79,7 +79,7 @@ function onLocaleChange(event: Event) {
     const target = event.target as HTMLSelectElement
     const code = target.value
     const path = switchLocalePath(code as any)
-    navigateTo(path, { replace: true })
+    navigateTo(path)
 }
 </script>
 
@@ -89,7 +89,7 @@ function onLocaleChange(event: Event) {
             <!-- Logo -->
             <NuxtLink :to="localePath('/')" class="logo" @click.prevent="handleNavClick(0.0)">
                 <Icon name="mdi:compass-rose" class="logo-icon" />
-                <span class="logo-text">Uzbekistan Travel</span>
+                <span class="logo-text">Tourist Villages</span>
             </NuxtLink>
 
             <!-- Right Side content wrapper -->
@@ -106,8 +106,8 @@ function onLocaleChange(event: Event) {
                     </ul>
                 </nav>
 
-                <!-- Language Switcher -->
-                <div class="lang-select-wrapper">
+                <!-- Language Switcher (Desktop) -->
+                <div class="lang-select-wrapper desktop-lang">
                     <Icon name="mdi:translate" class="lang-icon" />
                     <select :value="locale" class="lang-select" @change="onLocaleChange"
                         :aria-label="t('footer.language', 'Language')">
@@ -119,8 +119,9 @@ function onLocaleChange(event: Event) {
                 </div>
 
                 <!-- Mobile Menu Toggle Button -->
-                <button class="mobile-menu-toggle" aria-label="Toggle menu" @click="toggleMobileMenu">
-                    <Icon :name="isMobileMenuOpen ? 'mdi:close' : 'mdi:menu'" class="menu-icon" />
+                <button v-show="!isMobileMenuOpen" class="mobile-menu-toggle" aria-label="Toggle menu"
+                    @click="toggleMobileMenu">
+                    <Icon name="mdi:menu" class="menu-icon" />
                 </button>
             </div>
         </div>
@@ -128,6 +129,11 @@ function onLocaleChange(event: Event) {
         <!-- Mobile Nav Overlay -->
         <transition name="slide-down">
             <nav v-if="isMobileMenuOpen" class="mobile-nav">
+
+                <button class="mobile-close-btn" aria-label="Close menu" @click="closeMobileMenu">
+                    <Icon name="mdi:close" class="close-icon" />
+                </button>
+
                 <ul class="mobile-nav-list">
                     <li v-for="link in navLinks" :key="link.name">
                         <a href="#" class="mobile-nav-link" @click.prevent="handleNavClick(link.target)">
@@ -136,6 +142,18 @@ function onLocaleChange(event: Event) {
                         </a>
                     </li>
                 </ul>
+
+                <!-- Language Switcher (Mobile) -->
+                <div class="lang-select-wrapper mobile-lang">
+                    <Icon name="mdi:translate" class="lang-icon" />
+                    <select :value="locale" class="lang-select" @change="onLocaleChange"
+                        :aria-label="t('footer.language', 'Language')">
+                        <option v-for="loc in (locales as LocaleObject[])" :key="loc.code" :value="loc.code">
+                            {{ loc.code.toUpperCase() }}
+                        </option>
+                    </select>
+                    <Icon name="mdi:chevron-down" class="lang-chevron" />
+                </div>
             </nav>
         </transition>
     </header>
@@ -258,6 +276,12 @@ function onLocaleChange(event: Event) {
     align-items: center;
 }
 
+@media (max-width: 767px) {
+    .desktop-lang {
+        display: none !important;
+    }
+}
+
 .lang-icon {
     position: absolute;
     left: 10px;
@@ -371,6 +395,46 @@ function onLocaleChange(event: Event) {
 
 .mobile-nav-link:hover {
     color: var(--gold-color, #c5a13e);
+}
+
+.mobile-lang {
+    margin-top: 2rem;
+}
+
+.mobile-lang .lang-select {
+    font-size: 1.2rem;
+    padding: 10px 40px 10px 45px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.mobile-lang .lang-icon {
+    font-size: 1.5rem;
+    left: 15px;
+}
+
+.mobile-lang .lang-chevron {
+    font-size: 1.5rem;
+    right: 12px;
+}
+
+.mobile-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 2rem;
+    background: none;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 0;
+    z-index: 1002;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-close-btn .close-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
 /* Mobile Nav Transition */

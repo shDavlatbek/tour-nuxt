@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { useSeoMeta, useRoute, useRouter, createError } from 'nuxt/app'
+import { useSeoMeta, useRoute, createError } from 'nuxt/app'
 
 const { t } = useI18n()
 const route = useRoute()
-const router = useRouter()
 const rawSlug = route.params.slug
-console.log('[slug] route.params:', JSON.stringify(route.params))
-console.log('[slug] rawSlug type:', typeof rawSlug, 'value:', JSON.stringify(rawSlug))
 
 function extractSlug(param: unknown): string {
     if (typeof param === 'string') return param
@@ -31,22 +28,15 @@ if (error.value || !village.value) {
 // SEO
 useSeoMeta({
     title: `${village.value.name} — ${village.value.city_name} | ${t('seo.villageSuffix')}`,
-    description: village.value.description?.slice(0, 160) ?? '',
+    description: village.value.description?.slice(0, 160) ?? village.value.short_description ?? '',
+    keywords: village.value.seo_tags?.join(', ') ?? '',
     ogTitle: `${village.value.name} — ${village.value.city_name}`,
-    ogDescription: village.value.description?.slice(0, 160) ?? '',
+    ogDescription: village.value.description?.slice(0, 160) ?? village.value.short_description ?? '',
     ogType: 'article',
-    ogImage: village.value.gallery?.[0]?.image ?? ''
+    ogImage: village.value.image?.optimized ?? village.value.gallery?.[0]?.image ?? ''
 })
 
 const localePath = useLocalePath()
-
-function goBack(): void {
-    if (window.history.length > 1) {
-        router.back()
-    } else {
-        navigateTo(localePath('/'), { replace: true })
-    }
-}
 </script>
 
 <template>
@@ -55,22 +45,26 @@ function goBack(): void {
         <div class="grain-overlay" />
         <div class="vignette-overlay" />
 
-        <!-- Back Navigation -->
-        <nav class="village-page__nav">
-            <a href="#" class="village-page__back" @click.prevent="goBack">
-                <span class="village-page__back-arrow">←</span>
-                <span class="village-page__back-text">{{ $t('village.backToExplore') }}</span>
-            </a>
-        </nav>
-
         <!-- Sections -->
         <VillageHero :city-name="village.city_name" :village-name="village.name"
-            :hero-image="village.image?.original ?? ''" />
+            :hero-image="village.image?.optimized ?? ''" />
 
         <VillageDescription :subtitle="village.short_description"
             :paragraphs="village.description ? [village.description] : []" />
 
-        <VillageGallery :images="village.gallery.map(g => ({ id: g.id, src: g.image.original, alt: g.name }))" />
+        <div v-if="village.activities && village.activities.length" class="village-activities">
+            <div class="village-activities__container">
+                <h3 class="village-activities__title">{{ $t('village.activities.title') }}</h3>
+                <div class="village-activities__list">
+                    <span v-for="(activity, index) in village.activities" :key="index"
+                        class="village-activities__badge">
+                        {{ activity }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <VillageGallery :images="village.gallery.map(g => ({ id: g.id, src: g.image.optimized, alt: g.name }))" />
 
         <VillageComments :comments="village.comments.map(c => ({
             id: c.id,
@@ -94,56 +88,45 @@ function goBack(): void {
     background-color: #f5f0e6;
     min-height: 100vh;
     position: relative;
+    padding-top: 80px;
 }
 
-/* Back Navigation */
-.village-page__nav {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: 100;
-    padding: 1.25rem 2rem;
-    background: linear-gradient(180deg, rgba(245, 240, 230, 0.95) 0%, rgba(245, 240, 230, 0) 100%);
-    pointer-events: none;
+.village-activities {
+    background-color: #f5f0e6;
+    padding: 0 2rem 4rem;
 }
 
-.village-page__back {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    text-decoration: none;
-    color: #8c6b4a;
+.village-activities__container {
+    max-width: 1000px;
+    margin: 0 auto;
+    text-align: left;
+    /* small left side */
+}
+
+.village-activities__title {
     font-family: var(--font-primary);
-    font-size: 0.85rem;
+    font-size: 1.25rem;
     font-weight: 600;
+    color: #8c6b4a;
+    margin-bottom: 1.5rem;
+}
+
+.village-activities__list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.village-activities__badge {
+    display: inline-block;
+    font-family: var(--font-primary);
+    font-size: 0.8rem;
+    font-weight: 700;
     letter-spacing: 0.1em;
-    text-transform: uppercase;
-    pointer-events: auto;
-    transition: color 0.2s ease;
-}
-
-.village-page__back:hover {
-    color: #c85a2a;
-}
-
-.village-page__back-arrow {
-    font-size: 1.2rem;
-    transition: transform 0.2s ease;
-}
-
-.village-page__back:hover .village-page__back-arrow {
-    transform: translateX(-3px);
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .village-page__nav {
-        padding: 1rem;
-    }
-
-    .village-page__back-text {
-        font-size: 0.75rem;
-    }
+    color: #8c6b4a;
+    border: 1px solid rgba(140, 107, 74, 0.2);
+    padding: 0.6rem 1.5rem;
+    border-radius: 50px;
+    background: rgba(140, 107, 74, 0.05);
 }
 </style>

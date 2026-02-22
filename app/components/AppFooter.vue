@@ -36,7 +36,7 @@ function onLocaleChange(event: Event) {
     const target = event.target as HTMLSelectElement
     const code = target.value
     const path = switchLocalePath(code as any)
-    navigateTo(path, { replace: true })
+    navigateTo(path)
 }
 </script>
 
@@ -51,7 +51,7 @@ function onLocaleChange(event: Event) {
                 <div class="footer-brand">
                     <div class="logo">
                         <Icon name="mdi:compass-rose" class="logo-icon" />
-                        <span class="logo-text">Uzbekistan Travel</span>
+                        <span class="logo-text">Tourist Villages</span>
                     </div>
                     <p class="brand-desc">
                         {{ t('footer.description', 'Discover the hidden gems of Uzbekistan. ' +
@@ -112,7 +112,7 @@ function onLocaleChange(event: Event) {
 
             <!-- Bottom bar -->
             <div class="footer-bottom">
-                <p>&copy; {{ new Date().getFullYear() }} Uzbekistan Travel.
+                <p>&copy; {{ new Date().getFullYear() }} Tourist Villages.
                     {{ t('footer.rights', 'All rights reserved.') }}</p>
             </div>
         </div>
