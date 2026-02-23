@@ -197,7 +197,7 @@ const scrollIndicatorProgress = computed(() => {
         </div>
 
         <!-- Debug (remove in production) -->
-        <div class="debug">{{ scrollProgress.toFixed(2) }} / {{ (cityHeadLength).toFixed(2) }}</div>
+        <!-- <div class="debug">{{ scrollProgress.toFixed(2) }} / {{ (cityHeadLength).toFixed(2) }}</div> -->
     </div>
 </template>
 

@@ -43,6 +43,9 @@ onMounted(async () => {
     // Listen for mouse movement to hide hint
     window.addEventListener('mousemove', handleFirstInteraction)
     window.addEventListener('touchstart', handleFirstInteraction)
+
+    // Listen for global zoom out event
+    window.addEventListener('app:zoomOut', zoomOut)
 })
 
 // Cleanup on unmount
@@ -50,6 +53,7 @@ onUnmounted(() => {
     dispose()
     window.removeEventListener('mousemove', handleFirstInteraction)
     window.removeEventListener('touchstart', handleFirstInteraction)
+    window.removeEventListener('app:zoomOut', zoomOut)
 })
 
 // Hide mouse hint after first interaction, then show click hint
@@ -173,7 +177,7 @@ function handleBackClick() {
 
         <!-- UI Layer -->
         <div class="hero__ui-layer" v-if="!hidden">
-            <div class="hero__header" style="padding-top: 80px;">
+            <div class="hero__header" style="padding-top: 50px;">
                 <h1 class="hero__title">{{ $t('hero.title') }}</h1>
                 <p class="hero__subtitle">{{ $t('hero.subtitle') }}</p>
             </div>

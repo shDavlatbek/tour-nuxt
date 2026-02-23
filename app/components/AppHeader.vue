@@ -51,12 +51,16 @@ const closeMobileMenu = () => {
 
 const navLinks = [
     { name: 'header.home', target: 0.0 },
-    { name: 'header.destinations', target: 1.0 },
-    { name: 'header.about', target: 0.5 }
+    { name: 'header.destinations', target: 2 },
+    { name: 'header.about', target: 1 }
 ]
 
 const handleNavClick = async (target: number) => {
     closeMobileMenu()
+
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('app:zoomOut'))
+    }
 
     if (route.path !== localePath('/') && route.path !== '/') {
         await navigateTo(localePath('/'))
