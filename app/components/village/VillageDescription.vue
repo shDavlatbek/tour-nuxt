@@ -32,7 +32,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <section ref="sectionRef" class="village-desc" :class="{ 'is-visible': isVisible }">
+    <section v-if="paragraphs && paragraphs.length > 0" ref="sectionRef" class="village-desc"
+        :class="{ 'is-visible': isVisible }">
         <div class="village-desc__inner">
             <div class="village-desc__accent-bar"></div>
             <div class="village-desc__content">
@@ -63,7 +64,7 @@ onUnmounted(() => {
 }
 
 .village-desc__inner {
-    max-width: 900px;
+    max-width: 1000px;
     margin: 0 auto;
     display: flex;
     gap: 1.5rem;

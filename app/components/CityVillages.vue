@@ -5,6 +5,7 @@ import type { VillageList } from '~/types/village'
 interface Props {
     villages: VillageList[]
     cityName: string
+    short_description?: string
 }
 
 const props = defineProps<Props>()
@@ -63,7 +64,7 @@ onUnmounted(() => {
             <h2 class="villages-title">{{ props.cityName }}</h2>
             <div class="decorative-star">✦</div>
             <p class="villages-subtitle">
-                {{ $t('cityVillages.headerSubtitle') }}
+                {{ props.short_description || $t('cityVillages.headerSubtitle') }}
             </p>
             <div class="separator-line"></div>
         </header>

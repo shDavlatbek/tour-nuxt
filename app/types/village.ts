@@ -32,7 +32,10 @@ export interface VillageList {
   image: {
     original: string
     thumbnail: string
+    optimized?: string
   } | null
+  seo_tags: string[]
+  activities: string[]
 }
 
 export interface VillageDetail extends VillageList {

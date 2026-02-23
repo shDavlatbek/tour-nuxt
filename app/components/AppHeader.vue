@@ -49,9 +49,8 @@ const closeMobileMenu = () => {
     document.body.style.overflow = ''
 }
 
-const navLinks = [
-    { name: 'header.home', target: 0.0 },
-    { name: 'header.destinations', target: 2 },
+const navL<<<<<<< HEAD
+    { name: 'header.destinations', tar    { name: 'header.destinations', target: 2 },
     { name: 'header.about', target: 1 }
 ]
 
@@ -363,6 +362,18 @@ function onLocaleChange(event: Event) {
     gap: 2.5rem;
 }
 
+.mobile-nav-link {
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    font-family: var(--font-display, 'Outfit', serif);
+    font-size: 2rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    transition: color 0.3s ease;
+}
+
+.mobile-nav-link:hover {
+    color: var(--gold-color, #c5a13e);
 .mobile-nav-link {
     color: rgba(255, 255, 255, 0.8);
     text-decoration: none;

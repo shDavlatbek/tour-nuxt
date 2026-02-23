@@ -1,12 +1,27 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import type { VillageCommentDisplay } from '~/types/village'
+import { Swiper, SwiperSlide } from 'swiper/vue'
+import { Pagination, Autoplay } from 'swiper/modules'
+import 'swiper/css'
+import 'swiper/css/pagination'
 
 interface Props {
     comments: VillageCommentDisplay[]
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+const modules = [Pagination, Autoplay]
+
+// Read More logic
+const expandedComments = ref<Record<number, boolean>>({})
+const needsReadMore = ref<Record<number, boolean>>({})
+const textRefs = ref<HTMLElement[] | null>(null)
+
+const toggleReadMore = (id: number) => {
+    expandedComments.value[id] = !expandedComments.value[id]
+}
 
 // Intersection observer for section fade-in
 const sectionRef = ref<HTMLElement | null>(null)
@@ -26,6 +41,19 @@ onMounted(() => {
     if (sectionRef.value) {
         sectionObserver.observe(sectionRef.value)
     }
+
+    // Check which comments are overflowing and need a "Read More" button
+    nextTick(() => {
+        if (textRefs.value) {
+            textRefs.value.forEach((el: HTMLElement, index: number) => {
+                // If scrollHeight > clientHeight, text is truncated
+                if (el.scrollHeight > el.clientHeight) {
+                    const commentId = props.comments[index].id
+                    needsReadMore.value[commentId] = true
+                }
+            })
+        }
+    })
 })
 
 onUnmounted(() => {
@@ -34,7 +62,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-    <section ref="sectionRef" class="village-comments" :class="{ 'is-visible': isVisible }">
+    <section v-if="comments && comments.length > 0" ref="sectionRef" class="village-comments"
+        :class="{ 'is-visible': isVisible }">
         <!-- Header -->
         <header class="village-comments__header">
             <div class="village-comments__badge-wrapper">
@@ -45,32 +74,41 @@ onUnmounted(() => {
         </header>
 
         <!-- Grid of Cards (matching code.html layout) -->
-        <div class="village-comments__grid">
-            <article v-for="comment in comments" :key="comment.id" class="comment-card">
-                <!-- Big quotation mark -->
-                <div class="comment-card__quote-mark">\u201C</div>
+        <Swiper :modules="modules" :slides-per-view="'auto'" :space-between="24" :pagination="{ clickable: true }"
+            :autoplay="{ delay: 5000, disableOnInteraction: false }" class="village-comments__swiper">
+            <SwiperSlide v-for="comment in (comments || [])" :key="comment.id" class="comment-slide">
+                <article class="comment-card">
+                    <!-- Big quotation mark -->
+                    <div class="comment-card__quote-mark">❞</div>
 
-                <!-- Text content -->
-                <div class="comment-card__body">
-                    <p class="comment-card__text">{{ comment.text }}</p>
-                    <button class="comment-card__read-more">
-                        {{ $t('village.comments.readMore') }}
-                        <span class="comment-card__read-more-icon">▾</span>
-                    </button>
-                </div>
+                    <!-- Text content -->
+                    <div class="comment-card__body">
+                        <p ref="textRefs" class="comment-card__text"
+                            :class="{ 'is-expanded': expandedComments[comment.id] }">
+                            {{ comment.text }}
+                        </p>
+                        <button v-if="needsReadMore[comment.id]" class="comment-card__read-more"
+                            @click="toggleReadMore(comment.id)">
+                            {{ expandedComments[comment.id] ? $t('village.comments.readLess', 'Read Less') :
+                                $t('village.comments.readMore') }}
+                            <span class="comment-card__read-more-icon"
+                                :class="{ 'is-expanded': expandedComments[comment.id] }">▾</span>
+                        </button>
+                    </div>
 
-                <!-- Author footer -->
-                <div class="comment-card__footer">
-                    <div class="comment-card__avatar">
-                        {{ comment.authorInitials }}
+                    <!-- Author footer -->
+                    <div class="comment-card__footer">
+                        <div class="comment-card__avatar">
+                            {{ comment.authorInitials }}
+                        </div>
+                        <div class="comment-card__author-info">
+                            <span class="comment-card__name">{{ comment.authorName }}</span>
+                            <span class="comment-card__role">{{ comment.authorRole }}</span>
+                        </div>
                     </div>
-                    <div class="comment-card__author-info">
-                        <span class="comment-card__name">{{ comment.authorName }}</span>
-                        <span class="comment-card__role">{{ comment.authorRole }}</span>
-                    </div>
-                </div>
-            </article>
-        </div>
+                </article>
+            </SwiperSlide>
+        </Swiper>
     </section>
 </template>
 
@@ -128,13 +166,30 @@ onUnmounted(() => {
     margin: 0;
 }
 
-/* Grid - 3 columns matching code.html */
-.village-comments__grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+/* Swiper container */
+.village-comments__swiper {
+    padding-bottom: 3.5rem;
+    padding-top: 1rem;
+    /* Space for pagination dots */
     max-width: 1200px;
     margin: 0 auto;
+}
+
+.comment-slide {
+    width: auto;
+    /* Very important for slides-per-view auto */
+    height: auto;
+}
+
+/* Pagination Dots */
+:deep(.swiper-pagination-bullet) {
+    background: #8c6b4a;
+    opacity: 0.4;
+}
+
+:deep(.swiper-pagination-bullet-active) {
+    background: #D4AF37;
+    opacity: 1;
 }
 
 /* Comment Card - vintage border style matching code.html */
@@ -147,7 +202,12 @@ onUnmounted(() => {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 400px;
+    min-width: 340px;
+    max-width: 380px;
+    flex: 0 0 auto;
+    scroll-snap-align: center;
+    /* Remove fix min-height to allow internal text scroll wrapper to handle height */
+    height: 400px;
 }
 
 /* Vintage corner decorations */
@@ -205,6 +265,37 @@ onUnmounted(() => {
     line-height: 1.75;
     color: rgba(74, 59, 50, 0.8);
     margin: 0 0 1.5rem;
+
+    /* Clamp text by default */
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.comment-card__text.is-expanded {
+    -webkit-line-clamp: unset;
+    line-clamp: unset;
+    overflow-y: auto;
+    max-height: 15rem;
+    /* Roughly 6-7 lines, avoids breaking card layout */
+    padding-right: 0.5rem;
+}
+
+/* Custom scrollbar for expanded text */
+.comment-card__text.is-expanded::-webkit-scrollbar {
+    width: 4px;
+}
+
+.comment-card__text.is-expanded::-webkit-scrollbar-track {
+    background: rgba(140, 107, 74, 0.1);
+    border-radius: 4px;
+}
+
+.comment-card__text.is-expanded::-webkit-scrollbar-thumb {
+    background: rgba(140, 107, 74, 0.5);
+    border-radius: 4px;
 }
 
 .comment-card__read-more {
@@ -233,8 +324,16 @@ onUnmounted(() => {
     transition: transform 0.2s;
 }
 
+.comment-card__read-more-icon.is-expanded {
+    transform: rotate(180deg);
+}
+
 .comment-card__read-more:hover .comment-card__read-more-icon {
     transform: translateY(2px);
+}
+
+.comment-card__read-more:hover .comment-card__read-more-icon.is-expanded {
+    transform: translateY(-2px) rotate(180deg);
 }
 
 /* Author footer */
@@ -287,7 +386,7 @@ onUnmounted(() => {
 /* Responsive */
 @media (max-width: 1024px) {
     .village-comments__grid {
-        grid-template-columns: repeat(2, 1fr);
+        scroll-padding-left: 2rem;
     }
 }
 
@@ -296,13 +395,15 @@ onUnmounted(() => {
         padding: 3rem 1rem;
     }
 
-    .village-comments__grid {
-        grid-template-columns: 1fr;
+    .comment-card {
+        min-width: 85vw;
+        /* Allow small cards to fit width */
+        height: 380px;
+        padding: 1.5rem 1.5rem;
     }
 
-    .comment-card {
-        min-height: 320px;
-        padding: 1.5rem 1.5rem;
+    .comment-card__text.is-expanded {
+        max-height: 12rem;
     }
 }
 </style>
