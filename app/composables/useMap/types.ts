@@ -5,6 +5,7 @@ export interface MapState {
   isLoading: boolean
   isFrozen: boolean
   isPaused: boolean // Completely stops rendering and events
+  selectedRegionId: string | null
 }
 
 export interface UseMapReturn {

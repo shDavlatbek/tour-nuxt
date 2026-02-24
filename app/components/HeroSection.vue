@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
+import { onMounted, onUnmounted, ref, watch, nextTick, computed } from 'vue'
 import { useMap } from '../composables/useMap'
+import { useApi } from '../composables/useApi'
+import type { VillageList } from '../types/village'
 
 interface Props {
     frozen?: boolean
@@ -15,6 +17,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const { state, init, dispose, zoomOut, freeze, unfreeze, setScrollZoom, pause, resume } = useMap()
+const api = useApi()
 
 const mapContainer = ref<HTMLElement | null>(null)
 const showZoomVignette = ref(false)
@@ -115,6 +118,59 @@ watch(
     }
 )
 
+const regionSlugMap: Record<string, string> = {
+    'andijan': 'andijon',
+    'bukhara': 'buxoro',
+    'fergana': 'fargona',
+    'jizzakh': 'jizzax',
+    'namangan': 'namangan',
+    'navoi': 'navoiy',
+    'kashkadarya': 'qashqadaryo',
+    'samarkand': 'samarqand',
+    'sirdaryo': 'sirdaryo',
+    'surkhandarya': 'surxondaryo',
+    'tashkent': 'toshkent',
+    'khorezm': 'xorazm',
+    'karakalpakstan': 'qoraqalpogiston'
+}
+
+const cityVillages = ref<VillageList[]>([])
+const isLoadingVillages = ref(false)
+const leftVillages = computed<VillageList[]>(() => cityVillages.value.slice(0, 3))
+const rightVillages = computed<VillageList[]>(() => cityVillages.value.slice(3, 6))
+
+watch(
+    () => state.value.selectedRegionId,
+    async (regionId) => {
+        if (regionId) {
+            const slug = regionSlugMap[regionId]
+            if (slug) {
+                isLoadingVillages.value = true
+                try {
+                    const { data } = await api.fetchVillagesByCity(slug)
+                    if (data.value && data.value.results) {
+                        cityVillages.value = data.value.results
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch city villages', e)
+                } finally {
+                    isLoadingVillages.value = false
+                }
+            } else {
+                cityVillages.value = []
+                isLoadingVillages.value = false
+            }
+        } else {
+            // Zoom out
+            // Add a small delay for slide out animation
+            setTimeout(() => {
+                cityVillages.value = []
+                isLoadingVillages.value = false
+            }, 500)
+        }
+    }
+)
+
 function handleBackClick() {
     zoomOut()
 }
@@ -182,5 +238,164 @@ function handleBackClick() {
                 <p class="hero__subtitle">{{ $t('hero.subtitle') }}</p>
             </div>
         </div>
+
+        <!-- Village Cards Overlay -->
+        <div class="hero__villages-overlay"
+            :class="{ 'hero__villages-overlay--visible': state.isZoomed && cityVillages.length > 0 }">
+            <div class="hero__villages-side hero__villages-side--left">
+                <NuxtLink v-for="(village, idx) in leftVillages" :key="village.id"
+                    :to="$localePath({ name: 'villages-slug', params: { slug: village.slug } })"
+                    class="hero__village-card" :style="{ transitionDelay: `${idx * 150 + 600}ms` }">
+                    <img :src="village.image?.optimized || '/images/placehold.webp'" :alt="village.name"
+                        class="hero__village-image" />
+                    <div class="hero__village-content">
+                        <h4 class="hero__village-title">{{ village.name }}</h4>
+                    </div>
+                </NuxtLink>
+            </div>
+
+            <div class="hero__villages-side hero__villages-side--right">
+                <NuxtLink v-for="(village, idx) in rightVillages" :key="village.id"
+                    :to="$localePath({ name: 'villages-slug', params: { slug: village.slug } })"
+                    class="hero__village-card" :style="{ transitionDelay: `${idx * 150 + 600}ms` }">
+                    <img :src="village.image?.optimized || '/images/placehold.webp'" :alt="village.name"
+                        class="hero__village-image" />
+                    <div class="hero__village-content">
+                        <h4 class="hero__village-title">{{ village.name }}</h4>
+                    </div>
+                </NuxtLink>
+            </div>
+        </div>
+
+        <!-- No Villages State -->
+        <div class="hero__no-villages"
+            :class="{ 'hero__no-villages--visible': state.isZoomed && !isLoadingVillages && cityVillages.length === 0 }">
+            <p>{{ $t('cityVillages.noVillages') }}</p>
+        </div>
     </section>
 </template>
+
+<style scoped>
+.hero__villages-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    justify-content: space-between;
+    padding: 180px 40px 40px 40px;
+    /* offset top for header, safe area side */
+    z-index: 20;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s ease;
+}
+
+.hero__villages-overlay--visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+@media (max-width: 1024px) {
+    .hero__villages-overlay {
+        display: none !important;
+    }
+}
+
+.hero__villages-side {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 320px;
+    pointer-events: auto;
+}
+
+.hero__village-card {
+    position: relative;
+    border-radius: 12px;
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: flex-end;
+    text-decoration: none;
+    opacity: 0;
+    transition: all 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.hero__village-card:hover {
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+}
+
+.hero__villages-side--left .hero__village-card {
+    transform: translateX(-100px);
+}
+
+.hero__villages-side--right .hero__village-card {
+    transform: translateX(100px);
+}
+
+.hero__villages-overlay--visible .hero__villages-side--left .hero__village-card {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.hero__villages-overlay--visible .hero__villages-side--right .hero__village-card {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.hero__village-image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.8s ease;
+}
+
+.hero__village-card:hover .hero__village-image {
+    transform: scale(1.08);
+}
+
+.hero__village-content {
+    position: relative;
+    z-index: 2;
+    padding: 20px;
+    width: 100%;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0) 100%);
+    color: white;
+}
+
+.hero__village-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-family: var(--font-display, var(--font-serif, serif));
+}
+
+.hero__no-villages {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 20;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+}
+
+.hero__no-villages--visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.hero__no-villages p {
+    font-family: var(--font-display, var(--font-serif, serif));
+    font-size: 3rem;
+    color: white;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.1em;
+}
+</style>

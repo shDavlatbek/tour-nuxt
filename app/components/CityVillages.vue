@@ -75,7 +75,7 @@ onUnmounted(() => {
                 class="village-card" :class="{ 'is-visible': visibleVillages.has(village.id) }" :data-id="village.id"
                 :style="{ transitionDelay: `${index * 100}ms` }">
                 <div class="card-image-wrapper">
-                    <img :src="village.image?.original || '/images/placehold.webp'" :alt="village.name"
+                    <img :src="village.image?.optimized || '/images/placehold.webp'" :alt="village.name"
                         class="card-image" loading="lazy" />
                     <div class="card-border"></div>
                 </div>

@@ -32,6 +32,7 @@ export function useMap(): UseMapReturn {
     isLoading: true,
     isFrozen: false,
     isPaused: false,
+    selectedRegionId: null,
   })
 
   // Reactive state
@@ -182,6 +183,7 @@ export function useMap(): UseMapReturn {
   function triggerZoomToRegion(regionId: string, marker: THREE.Group) {
     if (!camera) return
     selectedRegionId = regionId
+    state.value.selectedRegionId = regionId
     updateLabelsForZoom(cityLabels, selectedRegionId, true, tweenGroup, 1.8)
     
     highlightRegionMeshes(marker, true)
@@ -468,6 +470,7 @@ export function useMap(): UseMapReturn {
 
     // 2. Reset Labels
     selectedRegionId = null
+    state.value.selectedRegionId = null
     updateLabelsForZoom(cityLabels, null, false, tweenGroup)
 
     // 3. Move Camera
