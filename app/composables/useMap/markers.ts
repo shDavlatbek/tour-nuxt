@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { COLORS, INITIAL_CAM_POS, REGION_NAMES } from './config'
+import { COLORS, INITIAL_CAM_POS, getInitialCamPosZ, REGION_NAMES } from './config'
 
 // Ripple animation settings
 const RIPPLE_SPEED = 0.8 // Speed of ripple expansion
@@ -74,7 +74,7 @@ export function updateMarkerScales(
   if (interactablePoints.length === 0) return
 
   const cameraZ = camera.position.z
-  const baseZ = INITIAL_CAM_POS.z
+  const baseZ = getInitialCamPosZ()
   const scaleFactor = Math.max(0.3, Math.min(1.0, cameraZ / baseZ))
 
   interactablePoints.forEach((marker) => {

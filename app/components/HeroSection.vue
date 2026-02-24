@@ -171,6 +171,30 @@ watch(
     }
 )
 
+const showMobileSheet = ref(false)
+const draggableSheetRef = ref<any>(null)
+
+watch(
+    () => state.value.isZoomed,
+    (isZoomed) => {
+        if (isZoomed && window.innerWidth <= 1024) {
+            // Open the sheet on mobile after a short delay for zoom animation
+            setTimeout(() => {
+                showMobileSheet.value = true
+            }, 800)
+        } else if (!isZoomed) {
+            showMobileSheet.value = false
+        }
+    }
+)
+
+// When user closes the DraggableSheet, zoom out the map
+watch(showMobileSheet, (val) => {
+    if (!val && state.value.isZoomed) {
+        zoomOut()
+    }
+})
+
 function handleBackClick() {
     zoomOut()
 }
@@ -272,6 +296,30 @@ function handleBackClick() {
             :class="{ 'hero__no-villages--visible': state.isZoomed && !isLoadingVillages && cityVillages.length === 0 }">
             <p>{{ $t('cityVillages.noVillages') }}</p>
         </div>
+
+        <!-- Mobile DraggableSheet -->
+        <ClientOnly>
+            <DraggableSheet v-model="showMobileSheet" ref="draggableSheetRef" :snap-points="[0.0, 0.5]"
+                :floating-handle="true" :show-close-button="false" class="hero__mobile-sheet">
+                <div class="hero__mobile-villages">
+                    <template v-if="cityVillages.length > 0">
+                        <NuxtLink v-for="village in cityVillages" :key="village.id"
+                            :to="$localePath({ name: 'villages-slug', params: { slug: village.slug } })"
+                            class="hero__mobile-village-card">
+                            <img :src="village.image?.optimized || '/images/placehold.webp'" :alt="village.name"
+                                class="hero__mobile-village-img" loading="lazy" />
+                            <div class="hero__mobile-village-info">
+                                <h4>{{ village.name }}</h4>
+                                <p v-if="village.short_description">{{ village.short_description }}</p>
+                            </div>
+                        </NuxtLink>
+                    </template>
+                    <div v-else class="hero__mobile-no-villages">
+                        <p>{{ $t('cityVillages.noVillages') }}</p>
+                    </div>
+                </div>
+            </DraggableSheet>
+        </ClientOnly>
     </section>
 </template>
 
@@ -397,5 +445,78 @@ function handleBackClick() {
     color: white;
     text-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     letter-spacing: 0.1em;
+}
+
+/* Mobile DraggableSheet */
+@media (min-width: 1025px) {
+    .hero__mobile-sheet {
+        display: none !important;
+    }
+}
+
+.hero__mobile-villages {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.hero__mobile-village-card {
+    display: flex;
+    gap: 14px;
+    text-decoration: none;
+    color: inherit;
+    padding: 12px;
+    border-radius: 12px;
+    background: #f9f5ef;
+    transition: background 0.2s ease;
+}
+
+.hero__mobile-village-card:active {
+    background: #ede8de;
+}
+
+.hero__mobile-village-img {
+    width: 80px;
+    height: 80px;
+    border-radius: 10px;
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.hero__mobile-village-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+}
+
+.hero__mobile-village-info h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-family: var(--font-display, var(--font-serif, serif));
+    color: #4a3b32;
+}
+
+.hero__mobile-village-info p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #8c8c8c;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.hero__mobile-no-villages {
+    text-align: center;
+    padding: 2rem;
+}
+
+.hero__mobile-no-villages p {
+    font-family: var(--font-display, var(--font-serif, serif));
+    font-size: 1.5rem;
+    color: #8c8c8c;
+    font-style: italic;
 }
 </style>

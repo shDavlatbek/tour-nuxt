@@ -135,7 +135,7 @@ function onLocaleChange(event: Event) {
             <nav v-if="isMobileMenuOpen" class="mobile-nav">
 
                 <button class="mobile-close-btn" aria-label="Close menu" @click="closeMobileMenu">
-                    <Icon name="mdi:close" class="close-icon" />
+                    <span class="close-icon">&times;</span>
                 </button>
 
                 <ul class="mobile-nav-list">
@@ -396,6 +396,7 @@ function onLocaleChange(event: Event) {
     letter-spacing: 0.05em;
     transition: color 0.3s ease;
 }
+
 .mobile-nav-link {
     color: rgba(255, 255, 255, 0.8);
 }
@@ -450,7 +451,9 @@ function onLocaleChange(event: Event) {
 }
 
 .mobile-close-btn .close-icon {
-    font-size: 2rem;
+    font-size: 2.5rem;
+    line-height: 1;
+    color: #fff;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 

@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { Tween, Easing, Group } from '@tweenjs/tween.js'
 import type { Ref } from 'vue'
-import { INITIAL_CAM_POS, PARALLAX_STRENGTH, ZOOMED_PARALLAX_STRENGTH, MAX_PARALLAX_OFFSET } from './config'
+import { INITIAL_CAM_POS, getInitialCamPosZ, PARALLAX_STRENGTH, ZOOMED_PARALLAX_STRENGTH, MAX_PARALLAX_OFFSET } from './config'
 import type { CameraPosition, MapState } from './types'
 
 // Helper type to accept either a Ref or a plain object
@@ -26,7 +26,12 @@ export function zoomIn(
   const worldTargetPos = new THREE.Vector3()
   targetPoint.getWorldPosition(worldTargetPos)
 
-  const finalZ = Math.max(targetPoint.userData.zoomDistance || 0, 50)
+  let finalZ = Math.max(targetPoint.userData.zoomDistance || 0, 50)
+
+  // On mobile, push camera slightly further back since viewport is narrower
+  if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+    finalZ *= 1.2
+  }
 
   // Main Camera Tween
   new Tween(camera.position, tweenGroup)
@@ -155,7 +160,7 @@ export function updateParallax(
   // Clamp values to prevent camera from drifting too far
   const pX = INITIAL_CAM_POS.x + mouseCurrent.x * PARALLAX_STRENGTH
   const pY = INITIAL_CAM_POS.y - mouseCurrent.y * PARALLAX_STRENGTH * 0.5
-  const pZ = INITIAL_CAM_POS.z
+  const pZ = getInitialCamPosZ()
 
   const clampedX = THREE.MathUtils.clamp(pX, -MAX_PARALLAX_OFFSET, MAX_PARALLAX_OFFSET)
   const clampedY = THREE.MathUtils.clamp(pY, -MAX_PARALLAX_OFFSET * 0.5, MAX_PARALLAX_OFFSET * 0.5)
