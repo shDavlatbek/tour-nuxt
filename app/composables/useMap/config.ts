@@ -4,13 +4,6 @@ import type { CameraPosition } from './types'
 export const MAP_SCALE = 2.5
 export const INITIAL_CAM_POS: CameraPosition = { x: 0, y: 0, z: 1200 }
 
-export function getInitialCamPosZ(): number {
-  if (typeof window !== 'undefined' && window.innerWidth <= 768) {
-    return 1800 // Further back on mobile so the whole country fits
-  }
-  return INITIAL_CAM_POS.z
-}
-
 // Parallax settings
 export const PARALLAX_STRENGTH = 50
 export const ZOOMED_PARALLAX_STRENGTH = 20

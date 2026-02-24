@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { Tween, Easing, Group } from '@tweenjs/tween.js'
 import type { Ref } from 'vue'
-import { INITIAL_CAM_POS, getInitialCamPosZ, PARALLAX_STRENGTH, ZOOMED_PARALLAX_STRENGTH, MAX_PARALLAX_OFFSET } from './config'
+import { INITIAL_CAM_POS, PARALLAX_STRENGTH, ZOOMED_PARALLAX_STRENGTH, MAX_PARALLAX_OFFSET } from './config'
 import type { CameraPosition, MapState } from './types'
 
 // Helper type to accept either a Ref or a plain object
@@ -160,7 +160,7 @@ export function updateParallax(
   // Clamp values to prevent camera from drifting too far
   const pX = INITIAL_CAM_POS.x + mouseCurrent.x * PARALLAX_STRENGTH
   const pY = INITIAL_CAM_POS.y - mouseCurrent.y * PARALLAX_STRENGTH * 0.5
-  const pZ = getInitialCamPosZ()
+  const pZ = INITIAL_CAM_POS.z
 
   const clampedX = THREE.MathUtils.clamp(pX, -MAX_PARALLAX_OFFSET, MAX_PARALLAX_OFFSET)
   const clampedY = THREE.MathUtils.clamp(pY, -MAX_PARALLAX_OFFSET * 0.5, MAX_PARALLAX_OFFSET * 0.5)

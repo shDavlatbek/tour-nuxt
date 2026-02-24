@@ -7,7 +7,7 @@ import { ref } from 'vue' // Changed back to ref for deep reactivity
 import type { MapState, UseMapReturn, CameraPosition } from './types'
 
 // Config
-import { INITIAL_CAM_POS, getInitialCamPosZ, LABEL_CONFIG, COLORS } from './config'
+import { INITIAL_CAM_POS, LABEL_CONFIG, COLORS } from './config'
 
 // Utilities
 import { createFogTexture } from './textures'
@@ -272,7 +272,7 @@ export function useMap(): UseMapReturn {
 
     // Camera
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 10000)
-    camera.position.set(INITIAL_CAM_POS.x, INITIAL_CAM_POS.y, getInitialCamPosZ())
+    camera.position.set(INITIAL_CAM_POS.x, INITIAL_CAM_POS.y, INITIAL_CAM_POS.z)
 
     // Renderer Optimization
     const pixelRatio = Math.min(window.devicePixelRatio, 2) // Cap at 2x for performance
@@ -496,7 +496,7 @@ export function useMap(): UseMapReturn {
 
   function setScrollZoom(progress: number): void {
     if (!camera) return
-    const startZ = getInitialCamPosZ()
+    const startZ = INITIAL_CAM_POS.z
     const endZ = 2500
     camera.position.z = startZ + (endZ - startZ) * progress
   }
