@@ -32,7 +32,8 @@
     "village": {
         "backToExplore": "Orqaga",
         "gallery": {
-            "title": "GALEREYA"
+            "title": "GALEREYA",
+            "loadMore": "Ko'proq ko'rsatish"
         },
         "map": {
             "title": "JOYLASHUV"

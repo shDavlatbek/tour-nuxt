@@ -32,7 +32,8 @@
     "village": {
         "backToExplore": "Назад",
         "gallery": {
-            "title": "ГАЛЕРЕЯ"
+            "title": "ГАЛЕРЕЯ",
+            "loadMore": "Показать ещё"
         },
         "map": {
             "title": "МЕСТОПОЛОЖЕНИЕ"

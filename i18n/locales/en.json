@@ -32,7 +32,8 @@
     "village": {
         "backToExplore": "Back to Explore",
         "gallery": {
-            "title": "GALLERY"
+            "title": "GALLERY",
+            "loadMore": "Load More"
         },
         "map": {
             "title": "LOCATION"

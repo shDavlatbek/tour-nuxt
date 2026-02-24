@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import type { GalleryImageDisplay } from '~/types/village'
 
 interface Props {
@@ -7,6 +7,47 @@ interface Props {
 }
 
 const props = defineProps<Props>()
+
+// Pagination / "Load More"
+const BATCH_SIZE = 24
+const displayCount = ref(BATCH_SIZE)
+
+const displayedImages = computed<GalleryImageDisplay[]>(() =>
+    props.images.slice(0, displayCount.value)
+)
+
+const hasMore = computed<boolean>(() => displayCount.value < props.images.length)
+
+const remainingCount = computed<number>(() =>
+    Math.max(0, props.images.length - displayCount.value)
+)
+
+function loadMore(): void {
+    const prevCount = displayCount.value
+    displayCount.value = Math.min(displayCount.value + BATCH_SIZE, props.images.length)
+
+    // Observe newly added items after DOM updates
+    nextTick(() => {
+        if (sectionRef.value && observer) {
+            const items = sectionRef.value.querySelectorAll('.village-gallery__item')
+            items.forEach((el, idx) => {
+                if (idx >= prevCount) {
+                    observer?.observe(el)
+                }
+            })
+        }
+    })
+}
+
+/**
+ * Calculate transition delay relative to each batch,
+ * so newly loaded images animate quickly (50ms stagger within batch)
+ * instead of accumulating huge delays from absolute index.
+ */
+function getTransitionDelay(index: number): string {
+    const positionInBatch = index % BATCH_SIZE
+    return `${positionInBatch * 50}ms`
+}
 
 // Intersection Observer for fade-in
 const sectionRef = ref<HTMLElement | null>(null)
@@ -44,7 +85,6 @@ function handleKeydown(e: KeyboardEvent): void {
 }
 
 onMounted(() => {
-    // Create observer first
     observer = new IntersectionObserver(
         (entries) => {
             entries.forEach((entry) => {
@@ -60,7 +100,6 @@ onMounted(() => {
         { threshold: 0.1, rootMargin: '0px 0px -30px 0px' }
     )
 
-    // Observe gallery items after DOM is ready
     nextTick(() => {
         if (sectionRef.value) {
             const items = sectionRef.value.querySelectorAll('.village-gallery__item')
@@ -89,14 +128,22 @@ onUnmounted(() => {
 
         <!-- Grid -->
         <div class="village-gallery__grid">
-            <div v-for="(image, index) in images" :key="image.id" class="village-gallery__item"
+            <div v-for="(image, index) in displayedImages" :key="image.id" class="village-gallery__item"
                 :class="{ 'is-visible': visibleImages.has(image.id) }" :data-id="image.id"
-                :style="{ transitionDelay: `${index * 80}ms` }" @click="openLightbox(index)">
+                :style="{ transitionDelay: getTransitionDelay(index) }" @click="openLightbox(index)">
                 <div class="village-gallery__frame">
                     <img :src="image.src" :alt="image.alt" class="village-gallery__image" loading="lazy" />
                     <div class="village-gallery__frame-border"></div>
                 </div>
             </div>
+        </div>
+
+        <!-- Load More -->
+        <div v-if="hasMore" class="village-gallery__load-more">
+            <button class="village-gallery__load-btn" @click="loadMore">
+                {{ $t('village.gallery.loadMore') }}
+                <span class="village-gallery__load-count">({{ remainingCount }})</span>
+            </button>
         </div>
 
         <!-- Lightbox -->
@@ -213,6 +260,45 @@ onUnmounted(() => {
     inset: 0.3rem;
     border: 1px solid #e0d8cc;
     pointer-events: none;
+}
+
+/* Load More */
+.village-gallery__load-more {
+    text-align: center;
+    margin-top: 3rem;
+}
+
+.village-gallery__load-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-primary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: #8c6b4a;
+    background: rgba(140, 107, 74, 0.06);
+    border: 1.5px solid rgba(140, 107, 74, 0.25);
+    padding: 0.85rem 2.5rem;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background 0.3s ease, border-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.village-gallery__load-btn:hover {
+    background: rgba(140, 107, 74, 0.12);
+    border-color: rgba(140, 107, 74, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(140, 107, 74, 0.12);
+}
+
+.village-gallery__load-btn:active {
+    transform: translateY(0);
+}
+
+.village-gallery__load-count {
+    opacity: 0.6;
+    font-weight: 400;
 }
 
 /* Responsive Grid */
