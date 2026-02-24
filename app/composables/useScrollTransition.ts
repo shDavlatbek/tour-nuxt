@@ -192,7 +192,7 @@ export function useScrollTransition(options: ScrollOptions = {}) {
   }
 
   function setProgress(val: number) {
-    targetProgress = Math.min(maxScroll.value, Math.max(0, val))
+    targetProgress = Math.max(0, val)
     scrollProgress.value = targetProgress
     if (rafId) cancelAnimationFrame(rafId)
     rafId = null

@@ -47,7 +47,7 @@ const localePath = useLocalePath()
 
         <!-- Sections -->
         <VillageHero :city-name="village.city_name" :village-name="village.name"
-            :hero-image="village.image?.optimized ?? ''" />
+            :hero-image="village.image?.optimized ?? '/images/placehold.webp'" />
 
         <VillageDescription :subtitle="village.short_description"
             :paragraphs="village.description ? [village.description] : []" />

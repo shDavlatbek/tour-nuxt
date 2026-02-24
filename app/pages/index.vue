@@ -20,7 +20,7 @@ const headers = computed(() => ({
 
 // --- Fetch cities + their villages in a single useAsyncData call ---
 const { data: cities } = await useAsyncData<CityWithVillages[]>(
-    'cities-with-villages',
+    `cities-with-villages-${locale.value}`,
     async () => {
         const citiesRes = await $fetch<PaginatedResponse<CityList>>('/cities/', {
             baseURL: apiBase,

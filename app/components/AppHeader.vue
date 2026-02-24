@@ -396,11 +396,12 @@ function onLocaleChange(event: Event) {
     letter-spacing: 0.05em;
     transition: color 0.3s ease;
 }
+.mobile-nav-link {
+    color: rgba(255, 255, 255, 0.8);
+}
 
 .mobile-nav-link:hover {
     color: var(--gold-color, #c5a13e);
-.mobile-nav-link {
-    color: rgba(255, 255, 255, 0.8);
     text-decoration: none;
     font-family: var(--font-display, 'Outfit', serif);
     font-size: 2rem;

@@ -15,19 +15,16 @@ export function useApi() {
   const config = useRuntimeConfig()
   const { locale } = useI18n()
 
-  const baseURL = computed(() => config.public.apiBase as string)
-
-  const headers = computed(() => ({
-    'Accept-Language': locale.value,
-  }))
+  const apiBase = config.public.apiBase as string
 
   /**
    * Fetch paginated list of cities.
    */
   function fetchCities() {
     return useFetch<PaginatedResponse<CityList>>('/cities/', {
-      baseURL: baseURL.value,
-      headers: headers.value,
+      baseURL: apiBase,
+      headers: { 'Accept-Language': locale.value },
+      key: `cities-${locale.value}`,
       watch: [locale],
     })
   }
@@ -37,8 +34,9 @@ export function useApi() {
    */
   function fetchCityBySlug(slug: string) {
     return useFetch<CityDetail>(`/cities/${slug}/`, {
-      baseURL: baseURL.value,
-      headers: headers.value,
+      baseURL: apiBase,
+      headers: { 'Accept-Language': locale.value },
+      key: `city-${slug}-${locale.value}`,
       watch: [locale],
     })
   }
@@ -48,9 +46,10 @@ export function useApi() {
    */
   function fetchVillagesByCity(citySlug: string) {
     return useFetch<PaginatedResponse<VillageList>>('/villages/', {
-      baseURL: baseURL.value,
-      headers: headers.value,
+      baseURL: apiBase,
+      headers: { 'Accept-Language': locale.value },
       params: { city: citySlug },
+      key: `villages-${citySlug}-${locale.value}`,
       watch: [locale],
     })
   }
@@ -60,8 +59,9 @@ export function useApi() {
    */
   function fetchVillageBySlug(slug: string) {
     return useFetch<VillageDetail>(`/villages/${slug}/`, {
-      baseURL: baseURL.value,
-      headers: headers.value,
+      baseURL: apiBase,
+      headers: { 'Accept-Language': locale.value },
+      key: `village-${slug}-${locale.value}`,
       watch: [locale],
     })
   }
@@ -71,8 +71,9 @@ export function useApi() {
    */
   function fetchSettings() {
     return useFetch<SiteSettings>('/settings/', {
-      baseURL: baseURL.value,
-      headers: headers.value,
+      baseURL: apiBase,
+      headers: { 'Accept-Language': locale.value },
+      key: `settings-${locale.value}`,
       watch: [locale],
     })
   }
