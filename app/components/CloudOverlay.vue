@@ -20,10 +20,6 @@ const CLOUD_CONFIGS = [
   { id: 2, sx: 60, sy: 0, s: 2.5 },
   { id: 3, sx: 0, sy: -60, s: 2.5 },
   { id: 4, sx: 0, sy: 60, s: 2.5 },
-  { id: 5, sx: -50, sy: -50, s: 2.0 },
-  { id: 6, sx: 50, sy: -50, s: 2.0 },
-  { id: 7, sx: -50, sy: 50, s: 2.0 },
-  { id: 8, sx: 50, sy: 50, s: 2.0 },
 ]
 
 const clouds: THREE.Sprite[] = []

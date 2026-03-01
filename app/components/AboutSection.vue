@@ -15,8 +15,11 @@ const props = withDefaults(defineProps<Props>(), {
     settings: null,
 })
 
+// Resolved background image URL from settings or prop
+const resolvedBgImage = computed(() => props.settings?.bg_image?.optimized || props.backgroundImage || '')
+
 // Show background image when progress > 0.8
-const showBackgroundImage = computed(() => props.progress > 0.8 && (props.settings?.bg_image?.optimized || props.backgroundImage))
+const showBackgroundImage = computed(() => props.progress > 0.8 && !!resolvedBgImage.value)
 
 // Transform calculation for slide-up effect
 const sectionStyle = computed(() => {
@@ -34,7 +37,7 @@ const sectionStyle = computed(() => {
 
 // Background image style with fade-in
 const backgroundStyle = computed(() => {
-    if (!props.backgroundImage) return {}
+    if (!resolvedBgImage.value) return {}
 
     // Fade in when progress goes from 0.8 to 1
     const fadeProgress = props.progress > 0.8
@@ -42,7 +45,7 @@ const backgroundStyle = computed(() => {
         : 0
 
     return {
-        backgroundImage: `url(${props.settings?.bg_image?.optimized || props.backgroundImage})`,
+        backgroundImage: `url(${resolvedBgImage.value})`,
         opacity: fadeProgress,
     }
 })
@@ -58,7 +61,7 @@ const isInteractive = computed(() => props.progress > 0.95)
     <section class="about-section" :style="sectionStyle"
         :class="{ 'about-section--dark': hasImageBackground, 'about-section--interactive': isInteractive }">
         <!-- Background image layer -->
-        <div v-if="backgroundImage" class="about-background" :style="backgroundStyle" />
+        <div v-if="resolvedBgImage" class="about-background" :style="backgroundStyle" />
         <!-- Overlay for readability -->
         <div v-if="hasImageBackground" class="about-overlay" />
 

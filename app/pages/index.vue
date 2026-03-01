@@ -80,8 +80,8 @@ const {
 // Hero + About fixed animations (0 to 1.0)
 const isFrozen = computed(() => scrollProgress.value > 0.05)
 const heroPhase = createPhase(0, 0.5, { direction: 'none' })      // 0 → 0.5 = Hero zoom out
-const cloudPhase = createPhase(0.15, 1.0, { direction: 'none' })  // 0.15 → 1.0 = Cloud overlay
-const aboutPhase = createPhase(0.5, 1.0, { direction: 'up' })     // 0.5 → 1.0 = About section
+const cloudPhase = createPhase(0.15, 0.5, { direction: 'none' })  // 0.15 → 0.7 = Cloud overlay
+const aboutPhase = createPhase(0.3, 1.0, { direction: 'up' })     // 0.5 → 1.0 = About section
 const mapZoomInPhase = createPhase(0.7, 1.0, { direction: 'none' }) // 0.7 → 1.0 = Map zooms back in
 
 // Combined zoom: zoom out (0→0.5) then zoom back in (0.7→1.0)

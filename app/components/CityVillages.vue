@@ -120,7 +120,7 @@ onUnmounted(() => {
 .villages-title {
     font-family: var(--font-display);
     /* fallback */
-    font-size: clamp(3rem, 8vw, 6rem);
+    font-size: clamp(2rem, 5vw, 3.5rem);
     color: #8c6b4a;
     margin: 0;
     display: inline-block;
@@ -143,6 +143,7 @@ onUnmounted(() => {
     margin-left: auto;
     margin-right: auto;
     font-family: var(--font-serif);
+    font-size: 1.2rem;
 }
 
 .separator-line {

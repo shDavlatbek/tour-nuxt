@@ -105,7 +105,7 @@ const localePath = useLocalePath()
 
 .village-activities__title {
     font-family: var(--font-primary);
-    font-size: 1.25rem;
+    font-size: 1.4rem;
     font-weight: 600;
     color: #8c6b4a;
     margin-bottom: 1.5rem;
@@ -120,12 +120,12 @@ const localePath = useLocalePath()
 .village-activities__badge {
     display: inline-block;
     font-family: var(--font-primary);
-    font-size: 0.8rem;
+    font-size: 1rem;
     font-weight: 700;
     letter-spacing: 0.1em;
     color: #8c6b4a;
     border: 1px solid rgba(140, 107, 74, 0.2);
-    padding: 0.6rem 1.5rem;
+    padding: 0.75rem 1.75rem;
     border-radius: 50px;
     background: rgba(140, 107, 74, 0.05);
 }

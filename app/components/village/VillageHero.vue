@@ -56,7 +56,7 @@ defineProps<Props>()
 
 .village-hero__name {
     font-family: var(--font-display);
-    font-size: clamp(2.5rem, 7vw, 5rem);
+    font-size: clamp(1.8rem, 5vw, 3.5rem);
     font-weight: 400;
     color: #8c6b4a;
     margin: 0;

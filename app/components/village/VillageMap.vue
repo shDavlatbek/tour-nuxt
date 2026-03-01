@@ -17,52 +17,72 @@ const mapContainer = ref<HTMLElement | null>(null)
 const sectionRef = ref<HTMLElement | null>(null)
 const isVisible = ref(false)
 let map: any = null
-let mapboxgl: any = null
+let ymaps: any = null
 let sectionObserver: IntersectionObserver | null = null
+
+function loadYandexMapsScript(): Promise<void> {
+    return new Promise((resolve, reject) => {
+        // Check if already loaded
+        if ((window as any).ymaps) {
+            resolve()
+            return
+        }
+
+        const script = document.createElement('script')
+        script.src = 'https://api-maps.yandex.ru/2.1/?apikey=b2e578d5-16d8-4b36-81b6-e8b4a26a2097&lang=ru_RU'
+        script.async = true
+        script.onload = () => resolve()
+        script.onerror = () => reject(new Error('Failed to load Yandex Maps script'))
+        document.head.appendChild(script)
+    })
+}
 
 async function initMap(): Promise<void> {
     if (!mapContainer.value) return
 
     try {
-        // Dynamic import mapbox-gl
-        mapboxgl = await import('mapbox-gl')
-        // Also import css
-        await import('mapbox-gl/dist/mapbox-gl.css')
+        await loadYandexMapsScript()
 
-        mapboxgl.default.accessToken = 'pk.eyJ1Ijoiam9rYWJyYSIsImEiOiJjbWxnYm9oNmIwYXhoM2VwZGI5c2YzdnhuIn0.Qe2YCuPxmEMcrPLh5BwH4A'
+        ymaps = (window as any).ymaps
 
-        map = new mapboxgl.default.Map({
-            container: mapContainer.value,
-            style: 'mapbox://styles/mapbox/outdoors-v12',
-            center: [props.lng, props.lat],
-            zoom: props.zoom,
-            attributionControl: false,
-            scrollZoom: false,
-            cooperativeGestures: true
+        await new Promise<void>((resolve) => {
+            ymaps.ready(resolve)
         })
 
-        // Add navigation controls
-        map.addControl(new mapboxgl.default.NavigationControl(), 'top-right')
+        map = new ymaps.Map(mapContainer.value, {
+            center: [props.lat, props.lng],
+            zoom: props.zoom,
+            controls: ['zoomControl'],
+            behaviors: ['drag', 'dblClickZoom', 'multiTouch']
+        }, {
+            suppressMapOpenBlock: true
+        })
 
-        // Add attribution in bottom-right
-        map.addControl(new mapboxgl.default.AttributionControl({ compact: true }), 'bottom-right')
+        // Add placemark (marker)
+        const placemark = new ymaps.Placemark(
+            [props.lat, props.lng],
+            {
+                hintContent: props.villageName,
+                balloonContent: props.villageName
+            },
+            {
+                iconLayout: 'default#imageWithContent',
+                iconImageHref: '',
+                iconImageSize: [32, 42],
+                iconImageOffset: [-16, -42],
+                iconContentLayout: ymaps.templateLayoutFactory.createClass(
+                    '<svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+                    '<path d="M16 0C7.16 0 0 7.16 0 16C0 28 16 42 16 42C16 42 32 28 32 16C32 7.16 24.84 0 16 0Z" fill="#c85a2a"/>' +
+                    '<circle cx="16" cy="16" r="7" fill="#fff"/>' +
+                    '</svg>'
+                )
+            }
+        )
 
-        // Add marker
-        const markerEl = document.createElement('div')
-        markerEl.className = 'village-map__marker'
-        markerEl.innerHTML = `
-            <svg width="32" height="42" viewBox="0 0 32 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M16 0C7.16 0 0 7.16 0 16C0 28 16 42 16 42C16 42 32 28 32 16C32 7.16 24.84 0 16 0Z" fill="#c85a2a"/>
-                <circle cx="16" cy="16" r="7" fill="#fff"/>
-            </svg>
-        `
-
-        new mapboxgl.default.Marker({ element: markerEl })
-            .setLngLat([props.lng, props.lat])
-            .addTo(map)
+        map.geoObjects.add(placemark)
 
     } catch (error) {
-        console.warn('Mapbox GL could not be loaded:', error)
+        console.warn('Yandex Maps could not be loaded:', error)
     }
 }
 
@@ -71,7 +91,6 @@ onMounted(() => {
         (entries) => {
             if (entries[0]?.isIntersecting) {
                 isVisible.value = true
-                // Lazy-load the map when section is visible
                 initMap()
                 sectionObserver?.disconnect()
             }
@@ -86,7 +105,7 @@ onMounted(() => {
 
 onUnmounted(() => {
     sectionObserver?.disconnect()
-    map?.remove()
+    map?.destroy()
 })
 </script>
 
@@ -181,23 +200,5 @@ onUnmounted(() => {
         aspect-ratio: 4 / 3;
         min-height: 300px;
     }
-}
-</style>
-
-<style>
-/* Mapbox marker - global styles needed for dynamically created element */
-.village-map__marker {
-    cursor: pointer;
-    transition: transform 0.2s ease;
-}
-
-.village-map__marker:hover {
-    transform: scale(1.15);
-}
-
-/* Override mapbox default styles to match theme */
-.mapboxgl-ctrl-group {
-    border-radius: 4px !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 </style>

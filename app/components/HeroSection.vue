@@ -299,7 +299,7 @@ function handleBackClick() {
 
         <!-- Mobile DraggableSheet -->
         <ClientOnly>
-            <DraggableSheet v-model="showMobileSheet" ref="draggableSheetRef" :snap-points="[0.0, 0.5]"
+            <DraggableSheet v-model="showMobileSheet" ref="draggableSheetRef" :snap-points="[0, 0.5, 0.8]"
                 :floating-handle="true" :show-close-button="false" class="hero__mobile-sheet">
                 <div class="hero__mobile-villages">
                     <template v-if="cityVillages.length > 0">

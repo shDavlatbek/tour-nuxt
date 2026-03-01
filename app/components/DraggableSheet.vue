@@ -282,7 +282,8 @@ function handleContentMove(ev) {
     const dy = clientY - startY.value;
     const dragTol = Number(props.dragStartTolerance) || 4;
 
-    if (c.scrollHeight > c.clientHeight && dy < 0 && c.scrollTop > 0) {
+    // If user is scrolling content up (finger moving up, dy < 0), always allow native scroll
+    if (dy < 0) {
         return;
     }
 
