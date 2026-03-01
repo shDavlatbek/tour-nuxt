@@ -5,6 +5,10 @@ import { useScrollTransition } from '../composables/useScrollTransition'
 import { useScrollableSection } from '../composables/useScrollableSection'
 import type { CityList, VillageList, PaginatedResponse } from '~/types/village'
 
+// --- Fetch site settings (about section + social links) ---
+const { fetchSettings } = useApi()
+const { data: settings } = await fetchSettings()
+
 interface CityWithVillages extends CityList {
     villages: VillageList[]
 }
@@ -176,8 +180,7 @@ const scrollIndicatorProgress = computed(() => {
 
             <!-- About Section - slides up and then scrolls out -->
             <ClientOnly>
-                <AboutSection :progress="aboutPhase.progress.value" :scroll-out="aboutScrollOut"
-                    background-image="https://uzbekistan.travel/storage/app/media/uploaded-files/samarkand-uzbekistan-kupol-mechet-ploshchad.png" />
+                <AboutSection :progress="aboutPhase.progress.value" :scroll-out="aboutScrollOut" :settings="settings" />
             </ClientOnly>
         </div>
 
@@ -186,7 +189,7 @@ const scrollIndicatorProgress = computed(() => {
             <CityHead />
             <CityVillages v-for="city in (cities || [])" :key="city.id" :villages="city.villages ?? []"
                 :city-name="city.name" :short_description="city.short_description" />
-            <AppFooter />
+            <AppFooter :settings="settings" />
         </div>
 
         <!-- Visual Scroll Indicator -->

@@ -1,10 +1,12 @@
 <script setup lang="ts">
+const { fetchSettings } = useApi()
+const { data: settings } = await fetchSettings()
 </script>
 
 <template>
   <div>
     <NuxtRouteAnnouncer />
-    <AppHeader />
+    <AppHeader :settings="settings" />
     <NuxtPage />
   </div>
 </template>

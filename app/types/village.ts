@@ -80,7 +80,19 @@ export interface VillageCommentDisplay {
 
 // --- Settings (API response) ---
 export interface SiteSettings {
+  logo?: {
+    original: string
+    optimized?: string
+  }
+  title?: string
   about_title: string
   about_description: string
-  bg_image: string | null
+  bg_image: {
+    original: string
+    optimized?: string
+  } | null
+  instagram_link?: string
+  telegram_link?: string
+  facebook_link?: string
+  youtube_link?: string
 }

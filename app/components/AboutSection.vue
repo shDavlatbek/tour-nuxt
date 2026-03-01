@@ -1,22 +1,22 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import type { SiteSettings } from '~/types/village'
 
 interface Props {
     progress: number // 0 to 1 (entry animation)
     scrollOut?: number // percentage to scroll up (0 = none, 100 = fully off screen)
     backgroundImage?: string // URL from backend
+    settings?: SiteSettings | null
 }
 
 const props = withDefaults(defineProps<Props>(), {
     scrollOut: 0,
     backgroundImage: '',
+    settings: null,
 })
 
-const { fetchSettings } = useApi()
-const { data: settings } = await fetchSettings()
-
 // Show background image when progress > 0.8
-const showBackgroundImage = computed(() => props.progress > 0.8 && (settings.value?.bg_image || props.backgroundImage))
+const showBackgroundImage = computed(() => props.progress > 0.8 && (props.settings?.bg_image?.optimized || props.backgroundImage))
 
 // Transform calculation for slide-up effect
 const sectionStyle = computed(() => {
@@ -42,7 +42,7 @@ const backgroundStyle = computed(() => {
         : 0
 
     return {
-        backgroundImage: `url(${settings.value?.bg_image || props.backgroundImage})`,
+        backgroundImage: `url(${props.settings?.bg_image?.optimized || props.backgroundImage})`,
         opacity: fadeProgress,
     }
 })
@@ -74,7 +74,7 @@ const isInteractive = computed(() => props.progress > 0.95)
                 </template>
             </div>
 
-            <div class="about-stats">
+            <!-- <div class="about-stats">
                 <div class="stat-item">
                     <span class="stat-number">7</span>
                     <span class="stat-label">{{ $t('about.statSites') }}</span>
@@ -87,7 +87,7 @@ const isInteractive = computed(() => props.progress > 0.95)
                     <span class="stat-number">100+</span>
                     <span class="stat-label">{{ $t('about.statVillages') }}</span>
                 </div>
-            </div>
+            </div> -->
 
             <button class="about-button">{{ $t('about.exploreMore') }}</button>
         </div>

@@ -1,19 +1,27 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import type { SiteSettings } from '~/types/village'
+
 const { locale, locales, t } = useI18n()
 const switchLocalePath = useSwitchLocalePath()
 
-interface SocialLink {
-    name: string
-    url: string
-    icon: string
+interface Props {
+    settings?: SiteSettings | null
 }
 
-const socialLinks: SocialLink[] = [
-    { name: 'Instagram', url: '#', icon: 'mdi:instagram' },
-    { name: 'Telegram', url: '#', icon: 'mdi:telegram' },
-    { name: 'Facebook', url: '#', icon: 'mdi:facebook' },
-    { name: 'YouTube', url: '#', icon: 'mdi:youtube' }
-]
+const props = withDefaults(defineProps<Props>(), {
+    settings: null,
+})
+
+const socialLinks = computed(() => {
+    const links = [
+        { name: 'Instagram', url: props.settings?.instagram_link, icon: 'mdi:instagram' },
+        { name: 'Telegram', url: props.settings?.telegram_link, icon: 'mdi:telegram' },
+        { name: 'Facebook', url: props.settings?.facebook_link, icon: 'mdi:facebook' },
+        { name: 'YouTube', url: props.settings?.youtube_link, icon: 'mdi:youtube' },
+    ]
+    return links.filter(link => link.url)
+})
 
 interface CorpInfo {
     address: string
@@ -50,13 +58,24 @@ function onLocaleChange(event: Event) {
                 <!-- Brand Column -->
                 <div class="footer-brand">
                     <div class="logo">
-                        <Icon name="mdi:compass-rose" class="logo-icon" />
-                        <span class="logo-text">Tourist Villages</span>
+                        <img v-if="settings?.logo" :src="settings.logo.optimized || settings.logo.original" alt="Logo"
+                            class="logo-img" />
+                        <Icon v-else name="mdi:compass-rose" class="logo-icon" />
+                        <span class="logo-text">{{ settings?.title || 'Tourist Villages' }}</span>
                     </div>
                     <p class="brand-desc">
                         {{ t('footer.description', 'Discover the hidden gems of Uzbekistan. ' +
                             'Experience the culture, history, and beauty of our villages.') }}
                     </p>
+                    <!-- <div class="social-links">
+                        <a v-for="link in socialLinks" :key="link.name" :href="link.url" class="social-link"
+                            target="_blank" rel="noopener noreferrer" :aria-label="link.name">
+                            <Icon :name="link.icon" />
+                        </a>
+                    </div> -->
+                </div>
+                <div class="footer-section">
+                    <h3 class="section-title">{{ t('footer.social_links', 'Social Links') }}</h3>
                     <div class="social-links">
                         <a v-for="link in socialLinks" :key="link.name" :href="link.url" class="social-link"
                             target="_blank" rel="noopener noreferrer" :aria-label="link.name">
@@ -64,9 +83,8 @@ function onLocaleChange(event: Event) {
                         </a>
                     </div>
                 </div>
-
                 <!-- Contact Column -->
-                <div class="footer-section">
+                <!-- <div class="footer-section">
                     <h3 class="section-title">{{ t('footer.contact', 'Contact Us') }}</h3>
                     <ul class="contact-list">
                         <li>
@@ -82,7 +100,7 @@ function onLocaleChange(event: Event) {
                             <a :href="`tel:${corpInfo.phone}`">{{ corpInfo.phone }}</a>
                         </li>
                     </ul>
-                </div>
+                </div> -->
 
                 <!-- Quick Links Column -->
                 <!-- <div class="footer-section">
@@ -163,6 +181,12 @@ function onLocaleChange(event: Event) {
 .logo-icon {
     font-size: 1.8rem;
     color: var(--gold-color, #c5a13e);
+}
+
+.logo-img {
+    height: 2rem;
+    width: auto;
+    object-fit: contain;
 }
 
 .logo-text {

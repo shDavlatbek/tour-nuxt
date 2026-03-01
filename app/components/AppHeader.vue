@@ -2,6 +2,15 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLocalePath, useRoute, navigateTo, useSwitchLocalePath } from '#imports'
+import type { SiteSettings } from '~/types/village'
+
+interface Props {
+    settings?: SiteSettings | null
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    settings: null,
+})
 
 const { t, locale, locales } = useI18n()
 const localePath = useLocalePath()
@@ -92,8 +101,10 @@ function onLocaleChange(event: Event) {
         <div class="header-container">
             <!-- Logo -->
             <NuxtLink :to="localePath('/')" class="logo" @click.prevent="handleNavClick(0.0)">
-                <Icon name="mdi:compass-rose" class="logo-icon" />
-                <span class="logo-text">Tourist Villages</span>
+                <img v-if="settings?.logo" :src="settings.logo.optimized || settings.logo.original" alt="Logo"
+                    class="logo-img" />
+                <Icon v-else name="mdi:compass-rose" class="logo-icon" />
+                <span class="logo-text">{{ settings?.title || 'Tourist Villages' }}</span>
             </NuxtLink>
 
             <!-- Right Side content wrapper -->
@@ -210,6 +221,12 @@ function onLocaleChange(event: Event) {
 .logo-icon {
     font-size: 1.8rem;
     color: var(--gold-color, #c5a13e);
+}
+
+.logo-img {
+    height: 2rem;
+    width: auto;
+    object-fit: contain;
 }
 
 .logo-text {
