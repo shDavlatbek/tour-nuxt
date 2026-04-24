@@ -101,9 +101,9 @@ function onLocaleChange(event: Event) {
         <div class="header-container">
             <!-- Logo -->
             <NuxtLink :to="localePath('/')" class="logo" @click.prevent="handleNavClick(0.0)">
-                <img v-if="settings?.logo" :src="settings.logo.optimized || settings.logo.original" alt="Logo"
-                    class="logo-img" />
-                <Icon v-else name="mdi:compass-rose" class="logo-icon" />
+                <!-- <img v-if="settings?.logo" :src="settings.logo.optimized || settings.logo.original" alt="Logo"
+                    class="logo-img" /> 
+                <Icon v-else name="mdi:compass-rose" class="logo-icon" />-->
                 <span class="logo-text">{{ settings?.title || 'Tourist Villages' }}</span>
             </NuxtLink>
 

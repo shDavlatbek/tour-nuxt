@@ -58,14 +58,13 @@ function onLocaleChange(event: Event) {
                 <!-- Brand Column -->
                 <div class="footer-brand">
                     <div class="logo">
-                        <img v-if="settings?.logo" :src="settings.logo.optimized || settings.logo.original" alt="Logo"
+                        <!-- <img v-if="settings?.logo" :src="settings.logo.optimized || settings.logo.original" alt="Logo"
                             class="logo-img" />
-                        <Icon v-else name="mdi:compass-rose" class="logo-icon" />
-                        <span class="logo-text">{{ settings?.title || 'Tourist Villages' }}</span>
+                        <Icon v-else name="mdi:compass-rose" class="logo-icon" /> -->
+                        <span class="logo-text">{{ t('footer.title') }}</span>
                     </div>
                     <p class="brand-desc">
-                        {{ t('footer.description', 'Discover the hidden gems of Uzbekistan. ' +
-                            'Experience the culture, history, and beauty of our villages.') }}
+                        {{ t('footer.description') }}
                     </p>
                     <!-- <div class="social-links">
                         <a v-for="link in socialLinks" :key="link.name" :href="link.url" class="social-link"
@@ -75,7 +74,7 @@ function onLocaleChange(event: Event) {
                     </div> -->
                 </div>
                 <div class="footer-section">
-                    <h3 class="section-title">{{ t('footer.social_links', 'Social Links') }}</h3>
+                    <h3 class="section-title">{{ t('footer.social_links') }}</h3>
                     <div class="social-links">
                         <a v-for="link in socialLinks" :key="link.name" :href="link.url" class="social-link"
                             target="_blank" rel="noopener noreferrer" :aria-label="link.name">
@@ -114,11 +113,11 @@ function onLocaleChange(event: Event) {
 
                 <!-- Language Column -->
                 <div class="footer-section">
-                    <h3 class="section-title">{{ t('footer.language', 'Language') }}</h3>
+                    <h3 class="section-title">{{ t('footer.language') }}</h3>
                     <div class="lang-select-wrapper">
                         <Icon name="mdi:translate" class="lang-icon" />
                         <select :value="locale" class="lang-select" @change="onLocaleChange"
-                            :aria-label="t('footer.language', 'Language')">
+                            :aria-label="t('footer.language')">
                             <option v-for="loc in (locales as LocaleObject[])" :key="loc.code" :value="loc.code">
                                 {{ loc.name }}
                             </option>
@@ -130,8 +129,16 @@ function onLocaleChange(event: Event) {
 
             <!-- Bottom bar -->
             <div class="footer-bottom">
-                <p>&copy; {{ new Date().getFullYear() }} Tourist Villages.
-                    {{ t('footer.rights', 'All rights reserved.') }}</p>
+                <div class="footer-developed">
+                    <span class="developed-label">{{ t('footer.developed_by') }}</span>
+                    <div class="developed-logos">
+                        <img src="~/assets/images/jc.png" alt="JICA" class="developed-logo" />
+                        <img src="~/assets/images/tour.png" alt="Tourism Committee of Uzbekistan"
+                            class="developed-logo" />
+                    </div>
+                </div>
+                <p>&copy; {{ new Date().getFullYear() }} {{ t('footer.title') }}.
+                    {{ t('footer.rights') }}</p>
             </div>
         </div>
     </footer>
@@ -390,11 +397,48 @@ function onLocaleChange(event: Event) {
 /* ── Bottom Bar ── */
 .footer-bottom {
     border-top: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 1.5rem 2rem;
-    text-align: center;
+    padding: 1.2rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     font-size: 0.8rem;
-    opacity: 0.5;
+    opacity: 0.6;
 }
+
+.footer-developed {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.developed-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.developed-logos {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.developed-logo {
+    height: 2.4rem;
+    width: auto;
+    object-fit: contain;
+    border-radius: 5px;
+    /* background: rgba(255, 255, 255, 0.92); */
+    padding: 0.25rem 0.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* .developed-logo:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(255, 255, 255, 0.12);
+} */
 
 /* ── Responsive ── */
 @media (max-width: 1024px) {
@@ -409,6 +453,17 @@ function onLocaleChange(event: Event) {
         grid-template-columns: 1fr;
         gap: 2rem;
         padding: 2rem 1rem 1rem;
+    }
+
+    .footer-bottom {
+        flex-direction: column;
+        gap: 0.8rem;
+        text-align: center;
+    }
+
+    .footer-developed {
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
     .footer-brand .logo {

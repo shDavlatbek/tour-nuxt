@@ -9,8 +9,8 @@
         "backToOverview": "← Back to Overview",
         "mouseHint": "Move mouse to explore",
         "clickHint": "Click a city to explore",
-        "title": "Tourist Villages",
-        "subtitle": "in UZBEKISTAN"
+        "title": "Tourism Villages",
+        "subtitle": "of UZBEKISTAN"
     },
     "about": {
         "subtitle": "ABOUT US",
@@ -52,6 +52,14 @@
         "homeTitle": "Tourist Villages — Hidden Gems",
         "homeDescription": "Discover the hidden gems of Uzbekistan. Explore tourist villages across the country",
         "villageSuffix": "Tourist Villages"
+    },
+    "footer": {
+        "description": "Discover the hidden gems of Uzbekistan. Experience the culture, history, and beauty of our villages.",
+        "social_links": "Social Links",
+        "language": "Language",
+        "developed_by": "Developed by",
+        "rights": "All rights reserved.",
+        "title": "Tourism Villages of Uzbekistan"
     },
     "languageSwitcher": {
         "label": "Language"

@@ -9,8 +9,8 @@
         "backToOverview": "← Umumiy ko'rinishga",
         "mouseHint": "Sichqonchani suring",
         "clickHint": "Shaharni bosing",
-        "title": "Turistik qishloqlar",
-        "subtitle": "O'ZBEKISTONDA"
+        "title": "O'zbekistondagi turizm",
+        "subtitle": "QISHLOQLARI"
     },
     "about": {
         "subtitle": "BIZ HAQIMIZDA",
@@ -52,6 +52,14 @@
         "homeTitle": "Turistik qishloqlar — Yashirin durdonalar",
         "homeDescription": "O'zbekistonning yashirin durdonalarini kashf eting. Mamlakatdagi turistik qishloqlarini o'rganing.",
         "villageSuffix": "Turistik qishloqlar"
+    },
+    "footer": {
+        "description": "O'zbekistonning yashirin durdonalarini kashf eting. Qishloqlarimizning madaniyati, tarixi va go'zalligini his qiling.",
+        "social_links": "Ijtimoiy tarmoqlar",
+        "language": "Til",
+        "developed_by": "Ishlab chiquvchi",
+        "rights": "Barcha huquqlar himoyalangan.",
+        "title": "O'zbekiston turizm qishloqlari"
     },
     "languageSwitcher": {
         "label": "Til"

@@ -14,8 +14,9 @@ function extractSlug(param: unknown): string {
 
 const slug = extractSlug(rawSlug)
 
-const { fetchVillageBySlug } = useApi()
+const { fetchVillageBySlug, fetchSettings } = useApi()
 const { data: village, error } = await fetchVillageBySlug(slug)
+const { data: settings } = await fetchSettings()
 
 if (error.value || !village.value) {
     throw createError({
@@ -79,7 +80,7 @@ const localePath = useLocalePath()
                 :lng="village.longitude ? parseFloat(village.longitude) : 0" :zoom="13" :village-name="village.name" />
         </ClientOnly>
 
-        <AppFooter />
+        <AppFooter :settings="settings" />
     </div>
 </template>
 
